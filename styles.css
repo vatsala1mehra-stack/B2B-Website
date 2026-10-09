@@ -1,19 +1,23 @@
 :root {
   --brand-red: #e40000;
-  --bg: #d3d4d7;          /* dim office grey; warms in later beats */
+  --bg: #d3d4d7;          /* dim office grey; lighting.js warms it as the story progresses */
   --text: #1d1e22;
-  --text-muted: #4e5058;
+  --text-muted: #45474e;
+  --dot: rgb(29 30 34 / 0.28);
   --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --nav-h: 56px;
   --gutter: 16px;
+  --fade: 0.7s;
   color-scheme: light;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-html, body { margin: 0; height: 100%; }
+html { scroll-snap-type: y mandatory; }
 body {
+  margin: 0;
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.5;
@@ -21,9 +25,9 @@ body {
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
 }
-:focus-visible { outline: 3px solid var(--brand-red); outline-offset: 3px; border-radius: 4px; }
+:focus-visible { outline: 3px solid var(--brand-red); outline-offset: 3px; border-radius: 6px; }
 
-/* Nav */
+/* ---------- Nav ---------- */
 .nav {
   position: fixed; inset: 0 0 auto; z-index: 10;
   height: var(--nav-h);
@@ -38,22 +42,33 @@ body {
 }
 .nav-buy:hover { color: var(--brand-red); }
 
-/* Stage: scene top 60%, copy bottom 40% on phones */
+/* ---------- Story: sticky stage over five scroll beats ---------- */
+.story { position: relative; }
 .stage {
-  position: relative;
+  position: sticky; top: 0;
   height: 100vh; height: 100svh;
   display: grid;
-  grid-template-rows: 60fr 40fr;
+  grid-template-rows: 60fr 40fr;     /* phones: scene top 60%, words bottom 40% */
+  overflow: hidden;
 }
-.scene { position: relative; min-height: 0; padding-top: var(--nav-h); opacity: 0; transition: opacity 1.4s ease; }
+.beats { margin-top: -100vh; margin-top: -100svh; }
+.beat { height: 100vh; height: 100svh; scroll-snap-align: start; scroll-snap-stop: always; }
+
+.scene { position: relative; min-height: 0; padding-top: var(--nav-h); opacity: 0; transition: opacity 1.2s ease; }
 .scene.is-ready { opacity: 1; }
+.scene.is-fading { opacity: 0; transition-duration: 0.35s; }
 .scene canvas { display: block; width: 100%; height: 100%; }
 
+.copies { position: relative; }
 .copy {
+  position: absolute; inset: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   text-align: center; padding: 0 var(--gutter) 24px;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
-.copy h1 {
+.copy.is-active { opacity: 1; transform: none; transition-duration: var(--fade); }
+.copy h2 {
   margin: 0 0 12px;
   font-size: clamp(2rem, 8.5vw, 4.25rem);
   line-height: 1.05; letter-spacing: -0.035em; font-weight: 800;
@@ -61,17 +76,25 @@ body {
 }
 .copy p { margin: 0; font-size: clamp(1rem, 2.2vw, 1.25rem); color: var(--text-muted); max-width: 34ch; text-wrap: balance; }
 
-/* Progress dots */
+/* ---------- Progress dots ---------- */
 .dots {
-  position: fixed; right: 14px; top: 50%; transform: translateY(-50%);
-  list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px;
+  position: fixed; right: 4px; top: 50%; transform: translateY(-50%); z-index: 10;
+  display: flex; flex-direction: column;
 }
-.dots li { width: 7px; height: 7px; border-radius: 50%; background: rgb(29 30 34 / 0.25); }
-.dots li.is-active { background: var(--brand-red); }
+.dots button {
+  width: 44px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer;
+  display: grid; place-items: center;
+}
+.dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--dot); transition: background 0.4s, transform 0.4s; }
+.dots button:hover span { transform: scale(1.3); }
+.dots button.is-active span { background: var(--brand-red); }
 
 @media (min-width: 900px) {
   .stage { grid-template-rows: 70fr 30fr; }
   .nav { padding: 0 32px; }
-  .dots { right: 28px; }
+  .dots { right: 16px; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .copy { transform: none; }
+}

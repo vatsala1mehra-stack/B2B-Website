@@ -129,9 +129,11 @@ export function createLine() {
 
   let ctrl = null;
   // Grow (or shrink) to any point along the path, with smooth easing.
-  function growTo(t, { duration = 1.4 } = {}) {
+  function growTo(t, { duration = 1.4, signal } = {}) {
     ctrl?.abort();
     ctrl = new AbortController();
+    if (signal?.aborted) return Promise.resolve(false);
+    signal?.addEventListener("abort", () => ctrl.abort(), { once: true });
     const from = drawn;
     return tween(duration, (k) => set(from + (t - from) * k), { signal: ctrl.signal });
   }

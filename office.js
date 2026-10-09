@@ -13,7 +13,7 @@ export const LITE =
   (navigator.hardwareConcurrency || 8) <= 4 ||
   navigator.connection?.saveData === true;
 const SEG = LITE ? 2 : 3;          // rounded-box bevel segments
-const CURVE = LITE ? 14 : 22;      // sphere/capsule/cylinder segments
+export const CURVE = LITE ? 14 : 22;      // sphere/capsule/cylinder segments
 
 /* ------------------------------------------------------------------ */
 /*  Look: shared uniforms so later beats can warm and saturate the room */
@@ -55,7 +55,7 @@ export const CLOTH = {
 /*  Geometry helpers (all geometry is cached and shared)               */
 /* ------------------------------------------------------------------ */
 const geoCache = new Map();
-function cached(key, make) {
+export function cached(key, make) {
   if (!geoCache.has(key)) geoCache.set(key, make());
   return geoCache.get(key);
 }
@@ -166,7 +166,7 @@ function desk({ id, x, z }) {
   const screenMesh = plane(lid, M.dark, 0.37, 0.24, 0, 0.15, 0.0095);
 
   chair(g, 0.05, 0.62);
-  parts[id] = { group: g, screen: screenMesh, seat: new THREE.Vector3(x + 0.05, SEAT_H, z + 0.62) };
+  parts[id] = { group: g, screen: screenMesh, seat: new THREE.Vector3(x + 0.05, SEAT_H, z + 0.7) };
 }
 
 function plant(x, z, size = 1) {
@@ -191,7 +191,7 @@ function sofa({ x, z }) {
   for (const sx of [-1, 1]) block(g, M.clay, L / 2 - 0.2, 0.14, D - 0.26, sx * (L / 4 - 0.05), 0.32, 0.08, 0.06);
   block(g, M.clay, L, 0.52, 0.22, 0, 0.32, -D / 2 + 0.11, 0.08);
   for (const sx of [-1, 1]) block(g, M.clay, 0.2, 0.42, D, sx * (L / 2 - 0.1), 0.32, 0, 0.08);
-  parts.sofa = { group: g, seats: [new THREE.Vector3(x + 0.12, SEAT_H, z - 0.45), new THREE.Vector3(x + 0.12, SEAT_H, z + 0.45)] };
+  parts.sofa = { group: g, seats: [new THREE.Vector3(x - 0.02, SEAT_H, z - 0.48), new THREE.Vector3(x - 0.02, SEAT_H, z + 0.48)] };
 }
 
 function frontDesk({ x, z }) {
@@ -219,7 +219,7 @@ function frontDesk({ x, z }) {
   chair(g, 0.1, -0.95, Math.PI);
   parts.frontDesk = {
     group: g, phoneKeys: keys, handset, lampShade: shade, lamp,
-    seat: new THREE.Vector3(x - 0.95, SEAT_H, z - 0.1),
+    seat: new THREE.Vector3(x - 1.02, SEAT_H, z - 0.1),
   };
 }
 
@@ -243,52 +243,6 @@ function router({ x, y, z }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  People — simple figurines; posture carries the story               */
-/* ------------------------------------------------------------------ */
-export const people = {};
-
-function person(name, { x, z, yaw, skin: skinColor, top, bottom, hair = "short", headTilt = 0.45, headYaw = 0, phone = "both" }) {
-  const g = group(office, x, 0, z, yaw);
-  g.name = name;
-  const skin = material(skinColor, 0.8);
-  for (const sx of [-1, 1]) capsule(g, bottom, 0.075, 0.6, sx * 0.09, 0.375, 0);
-  capsule(g, top, 0.19, 0.36, 0, 1.1, 0);
-
-  const head = group(g, 0, 1.6, 0.01);
-  head.rotation.set(headTilt, headYaw, 0);
-  sphere(head, skin, 0.15);
-  const cap = mesh(cached("hair", () => new THREE.SphereGeometry(0.158, CURVE, 10, 0, Math.PI * 2, 0, Math.PI * 0.45)), M.hair, head, 0, 0.01, -0.02);
-  cap.rotation.x = -0.6;
-  if (hair === "long") capsule(head, M.hair, 0.13, 0.16, 0, -0.1, -0.06).scale.set(1, 1, 0.7);
-  else if (hair === "bun") sphere(head, M.hair, 0.07, 0, 0.12, -0.13);
-
-  function arm(side, upperX, upperZ, foreX, foreY = 0) {
-    const sh = group(g, side * 0.24, 1.35, 0);
-    sh.rotation.set(upperX, 0, side * upperZ);
-    capsule(sh, top, 0.055, 0.2, 0, -0.14, 0);
-    const el = group(sh, 0, -0.3, 0);
-    el.rotation.set(foreX, foreY * side, 0);
-    capsule(el, top, 0.048, 0.14, 0, -0.1, 0);
-    sphere(el, skin, 0.048, 0, -0.24, 0);
-    return group(el, 0, -0.26, 0);
-  }
-
-  let hand;
-  if (phone === "both") { hand = arm(1, -0.25, 0.12, -1.25, -0.35); arm(-1, -0.25, 0.12, -1.25, -0.35); }
-  else if (phone === "right") { hand = arm(1, -0.2, 0.08, -1.2, -0.25); arm(-1, 0.04, 0.06, -0.12); }
-  else { hand = arm(1, 0.05, 0.08, -0.5); arm(-1, 0.04, 0.06, -0.15); }
-
-  g.updateMatrixWorld(true);
-  const p = g.worldToLocal(hand.getWorldPosition(new THREE.Vector3()));
-  const ph = group(g, phone === "both" ? 0 : p.x, p.y + 0.02, p.z + 0.01);
-  ph.rotation.x = phone === "side" ? -0.3 : -1.15;
-  block(ph, M.dark, 0.085, 0.16, 0.014, 0, -0.08, 0, 0.012);
-  const scr = plane(ph, M.dark, 0.07, 0.14, 0, 0, 0.0075);
-
-  people[name] = { group: g, head, phoneScreen: scr, skin };
-}
-
-/* ------------------------------------------------------------------ */
 /*  Compose                                                            */
 /* ------------------------------------------------------------------ */
 function buildOffice() {
@@ -300,10 +254,6 @@ function buildOffice() {
   frontDesk(LAYOUT.frontDesk);
   for (const [x, z, s] of LAYOUT.plants) plant(x, z, s);
 
-  person("Riya",  { x: 2.05, z: 1.05, yaw: 0.35, skin: SKIN[2], top: CLOTH.sage,  bottom: CLOTH.ink,   hair: "long", headTilt: 0.5 });
-  person("Arjun", { x: 1.1,  z: 1.55, yaw: 0.95, skin: SKIN[0], top: CLOTH.slate, bottom: CLOTH.umber, headTilt: 0.42, phone: "right" });
-  person("Meera", { x: 2.95, z: 1.6,  yaw: -0.25, skin: SKIN[1], top: CLOTH.mauve, bottom: CLOTH.denim, hair: "bun", headTilt: 0.55 });
-  person("Kabir", { x: 2.0,  z: 2.35, yaw: 0.6, skin: SKIN[3], top: CLOTH.sand,  bottom: CLOTH.stone, headTilt: 0.05, headYaw: -0.55, phone: "side" });
 }
 
 /* ------------------------------------------------------------------ */
@@ -412,7 +362,7 @@ if (renderer) {
   function loop() {
     if (!running) return;
     requestAnimationFrame(loop);
-    const dt = Math.min(clock.getDelta(), 0.05);
+    const dt = Math.min(clock.getDelta(), 0.1);
     let busy = stepTweens(dt);
     for (const cb of frameCallbacks) busy = cb(dt) || busy;
     if (busy) dirty = true;

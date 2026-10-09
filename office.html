@@ -36,19 +36,39 @@
     <a class="nav-buy js-checkout" href="https://www.airtel.in/business/">Buy online</a>
   </header>
 
-  <main class="stage">
-    <div class="scene" aria-hidden="true"><canvas></canvas></div>
-    <div class="copy">
-      <h1>Monday. Nothing works yet.</h1>
-      <p>A new team, a new office, and nothing set up.</p>
-    </div>
-    <ol class="dots" aria-hidden="true">
-      <li class="is-active"></li><li></li><li></li><li></li><li></li>
-    </ol>
+  <main>
+    <h1 class="sr-only">Airtel Business: your office, taken care of</h1>
+
+    <section class="story" aria-label="The story of a new office">
+      <div class="stage">
+        <div class="scene" aria-hidden="true"><canvas></canvas></div>
+        <div class="copies">
+          <div class="copy"><h2>Monday. Nothing works yet.</h2><p>A new team in a quiet, empty office.</p></div>
+          <div class="copy"><h2>Everyone, reachable.</h2><p>Every phone connected from the first minute.</p></div>
+          <div class="copy"><h2>Online. And staying that way.</h2><p>Fast, steady internet at every desk.</p></div>
+          <div class="copy"><h2>Open for customers.</h2><p>One number your customers can always reach.</p></div>
+          <div class="copy"><h2>Safe. Simple. One partner.</h2><p>Protected, connected, and all on one bill.</p></div>
+        </div>
+      </div>
+      <div class="beats" aria-hidden="true">
+        <div class="beat" data-beat="0"></div>
+        <div class="beat" data-beat="1"></div>
+        <div class="beat" data-beat="2"></div>
+        <div class="beat" data-beat="3"></div>
+        <div class="beat" data-beat="4"></div>
+      </div>
+    </section>
+
+    <nav class="dots" aria-label="Story progress">
+      <button type="button" aria-label="Beat 1: Monday. Nothing works yet."><span></span></button>
+      <button type="button" aria-label="Beat 2: Everyone, reachable."><span></span></button>
+      <button type="button" aria-label="Beat 3: Online. And staying that way."><span></span></button>
+      <button type="button" aria-label="Beat 4: Open for customers."><span></span></button>
+      <button type="button" aria-label="Beat 5: Safe. Simple. One partner."><span></span></button>
+    </nav>
   </main>
 
   <script type="module" src="main.js"></script>
-  <script type="module" src="office.js"></script>
-  <script type="module" src="lighting.js"></script>
+  <script type="module" src="story.js"></script>
 </body>
 </html>

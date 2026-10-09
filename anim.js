@@ -6,6 +6,7 @@ const active = new Set();
 // Tweens are stepped from the render loop (see office.js) so they stop when it pauses.
 export function tween(duration, onUpdate, { easing = ease, signal } = {}) {
   return new Promise((resolve) => {
+    if (signal?.aborted) { resolve(false); return; }
     if (duration <= 0) { onUpdate(1); resolve(true); return; }
     const t = { elapsed: 0, duration, onUpdate, easing, resolve, signal };
     active.add(t);

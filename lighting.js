@@ -3,7 +3,8 @@
 // eases from 0 to 1 over ~1.4s (and back if the line retracts). The whole room's
 // colour, exposure and warmth follow the zones, reaching full warm light at the end.
 import * as THREE from "three";
-import { scene, renderer, lights, look, parts, people, onFrame, requestRender, LAYOUT, material } from "./office.js";
+import { scene, renderer, lights, look, parts, onFrame, requestRender, LAYOUT, material } from "./office.js";
+import { people } from "./people.js";
 import { line } from "./line.js";
 import { ease } from "./anim.js";
 
@@ -116,18 +117,15 @@ const setScreen = (mat, k) => (mat.uniforms.uOn.value = k);
 const setGlow = (mat, k) => mat.color.copy(OFF).lerp(mat.userData.on, k);
 
 if (renderer && line) {
-  // Phones: screens glow, faces brighten
+  // Phones: screens glow, faces brighten (the people move later, so no floor pool)
   for (const name of ["Kabir", "Arjun", "Riya", "Meera"]) {
     const p = people[name];
     const mat = screenMaterial(phoneUI);
     p.phoneScreen.material = mat;
     const skinColor = p.skin.color.clone();
-    const pos = p.group.position;
-    const halo = pool(pos.x, 0.006, pos.z, 0.75);
     zone(name, 0.05, (k) => {
       setScreen(mat, k);
       p.skin.emissive.copy(skinColor).multiplyScalar(0.28 * k);
-      halo.material.opacity = 0.35 * k;
     });
   }
 
