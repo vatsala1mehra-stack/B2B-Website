@@ -75,5 +75,3 @@ body {
   .dots { right: 28px; }
 }
 
-/* TEMPORARY test slider */
-.test-slider { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(420px, 80vw); height: 44px; z-index: 20; accent-color: var(--brand-red); }

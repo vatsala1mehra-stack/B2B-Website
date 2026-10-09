@@ -44,7 +44,7 @@ export const M = {
   dark: material(0x2b2c30, 0.45),       // device bodies, vents
   hair: material(0x3a2e28, 0.85),
 };
-export const SKIN = [0xc8916c, 0xa36d4d, 0xdba987, 0x8a5a3e].map((c) => material(c, 0.8));
+export const SKIN = [0xc8916c, 0xa36d4d, 0xdba987, 0x8a5a3e]; // per-person materials so faces can brighten
 export const CLOTH = {
   slate: material(0x7f8b99), sand: material(0xb9a78d), sage: material(0x8e9985),
   mauve: material(0x8a7f8c), ink: material(0x474b54), umber: material(0x5d534a),
@@ -247,9 +247,10 @@ function router({ x, y, z }) {
 /* ------------------------------------------------------------------ */
 export const people = {};
 
-function person(name, { x, z, yaw, skin, top, bottom, hair = "short", headTilt = 0.45, headYaw = 0, phone = "both" }) {
+function person(name, { x, z, yaw, skin: skinColor, top, bottom, hair = "short", headTilt = 0.45, headYaw = 0, phone = "both" }) {
   const g = group(office, x, 0, z, yaw);
   g.name = name;
+  const skin = material(skinColor, 0.8);
   for (const sx of [-1, 1]) capsule(g, bottom, 0.075, 0.6, sx * 0.09, 0.375, 0);
   capsule(g, top, 0.19, 0.36, 0, 1.1, 0);
 
@@ -284,7 +285,7 @@ function person(name, { x, z, yaw, skin, top, bottom, hair = "short", headTilt =
   block(ph, M.dark, 0.085, 0.16, 0.014, 0, -0.08, 0, 0.012);
   const scr = plane(ph, M.dark, 0.07, 0.14, 0, 0, 0.0075);
 
-  people[name] = { group: g, head, phoneScreen: scr };
+  people[name] = { group: g, head, phoneScreen: scr, skin };
 }
 
 /* ------------------------------------------------------------------ */
