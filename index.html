@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Airtel Business for Founders</title>
+  <meta name="description" content="Connectivity, cloud, communications and security for new-age Indian startups — one partner, one bill.">
+  <meta name="theme-color" content="#e40000">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Manrope is a stand-in. Swap for the official brand typeface when available
+       (update --font-sans in styles.css). -->
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Must come before any module script that imports "three". -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#top" aria-label="Airtel Business — home">
+        <!--
+          ===================== BRAND SLOT =====================
+          Place the official Airtel Business logo file here, e.g.:
+            <img src="assets/airtel-business-logo.svg" alt="Airtel Business" height="28">
+          Use only the file supplied by the brand team. Do not redraw,
+          recolour or recreate the logo. Delete the text wordmark
+          below once the official file is in place.
+          ======================================================
+        -->
+        <span class="brand-text">Airtel Business</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="#stack">Solutions</a>
+        <a href="#why">Why Airtel</a>
+        <a href="#contact">Talk to us</a>
+      </nav>
+      <a class="btn btn-primary btn-sm js-checkout" href="https://www.airtel.in/business/">Get started</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <canvas class="hero-canvas" aria-hidden="true"></canvas>
+      <div class="container hero-inner">
+        <p class="eyebrow">For founders building in India</p>
+        <h1>Run your startup on<br><span class="accent">one connected stack.</span></h1>
+        <p class="lede">
+          Internet, numbers, cloud, customer messaging and security — set up
+          in days, billed once, and backed by a network that covers the country.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary js-checkout" href="https://www.airtel.in/business/">Get started</a>
+          <a class="btn btn-ghost" href="#stack">Build your stack</a>
+          <a class="btn btn-link js-guide" href="#" hidden>Download the founder’s guide →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="stack" aria-labelledby="stack-title">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow">Solutions</p>
+          <h2 id="stack-title">Pick what you need today. Add the rest as you grow.</h2>
+          <p class="muted">Select products to add them to your plan — we’ll send it along when you get in touch.</p>
+        </div>
+
+        <div class="filters" role="toolbar" aria-label="Filter by category"></div>
+        <ul class="catalogue" aria-live="polite"></ul>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="why" aria-labelledby="why-title">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow">Why Airtel Business</p>
+          <h2 id="why-title">Infrastructure that keeps up with your roadmap.</h2>
+        </div>
+        <div class="features">
+          <article class="feature">
+            <h3>One partner, one bill</h3>
+            <p>Mobility, internet, cloud and messaging on a single account, so finance closes the month faster.</p>
+          </article>
+          <article class="feature">
+            <h3>Starts small, scales fast</h3>
+            <p>Begin with a few SIMs and a broadband line; move up to leased lines and multi-site networks without switching vendors.</p>
+          </article>
+          <article class="feature">
+            <h3>Built for India</h3>
+            <p>Nationwide coverage, India-hosted cloud, and compliant messaging for reaching customers at scale.</p>
+          </article>
+          <article class="feature">
+            <h3>A human on call</h3>
+            <p>A dedicated relationship manager who knows your setup and gets issues to the right team.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="contact" aria-labelledby="contact-title">
+      <div class="container contact">
+        <div>
+          <p class="eyebrow">Talk to us</p>
+          <h2 id="contact-title">Tell us what you’re building.</h2>
+          <p class="muted">A specialist will get back with a plan sized for your team.</p>
+
+          <div class="plan" aria-live="polite">
+            <h3 class="plan-title">Your plan</h3>
+            <ul class="plan-list"></ul>
+            <p class="plan-empty muted">Nothing selected yet — pick products above, or just send the form.</p>
+          </div>
+        </div>
+
+        <form class="lead-form" novalidate>
+          <div class="field">
+            <label for="lead-name">Full name</label>
+            <input id="lead-name" name="name" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="lead-company">Company</label>
+            <input id="lead-company" name="company" autocomplete="organization" required>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="lead-email">Work email</label>
+              <input id="lead-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="field">
+              <label for="lead-phone">Mobile</label>
+              <input id="lead-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel"
+                     pattern="(\+91[\s-]?)?[6-9]\d{9}" placeholder="98xxxxxxxx" required>
+            </div>
+          </div>
+          <div class="field">
+            <label for="lead-size">Team size</label>
+            <select id="lead-size" name="teamSize">
+              <option value="1-10">1–10</option>
+              <option value="11-50">11–50</option>
+              <option value="51-200">51–200</option>
+              <option value="200+">200+</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="lead-notes">Anything else? <span class="muted">(optional)</span></label>
+            <textarea id="lead-notes" name="notes" rows="3"></textarea>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit">Request a callback</button>
+          <p class="form-status" role="status"></p>
+          <p class="fine-print muted">By submitting, you agree to be contacted by Airtel Business about your enquiry.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>Airtel Business — for founders.</p>
+      <p class="muted">Product names and pricing are indicative. Final terms are confirmed at checkout.</p>
+    </div>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+  <script type="module" src="scene.js"></script>
+</body>
+</html>
