@@ -15,14 +15,17 @@ const beatEls = [...document.querySelectorAll(".beat")];
 
 const box = (x1, y1, z1, x2, y2, z2) => new THREE.Box3(new THREE.Vector3(x1, y1, z1), new THREE.Vector3(x2, y2, z2));
 
-// What each beat frames and how far the line has travelled.
+// What each beat frames and how far the line has travelled. Portrait screens
+// get a tighter box around the part of the room that matters in that beat.
+const portrait = () => container.clientWidth / Math.max(1, container.clientHeight) < 1;
 const BEATS = [
-  { frame: () => viewForBox(box(0.6, 0, 0.6, 3.5, 1.8, 2.8), 1.3),              line: () => 0 },
-  { frame: () => viewForBox(box(0.6, 0, 0.4, 5.3, 1.8, 3.3), 1.12),             line: () => line.marks.Meera },
-  { frame: () => viewForBox(box(-1.1, 0, -4.0, 3.9, 2.2, 0.4), 1.08),           line: () => line.marks.deskD },
-  { frame: () => viewForBox(box(-4.4, 0, -1.3, 1.3, 1.2, 2.3), 1.08),           line: () => line.marks.frontDesk },
-  { frame: () => viewForBox(officeBox, 1.05),                                   line: () => 1 },
+  { wide: [box(0.6, 0, 0.6, 3.5, 1.8, 2.8), 1.3],    tall: [box(0.8, 0.2, 0.8, 3.3, 1.8, 2.6), 1.12], line: () => 0 },
+  { wide: [box(0.6, 0, 0.4, 5.3, 1.8, 3.3), 1.12],   tall: [box(0.6, 0, 0.5, 4.6, 1.8, 3.2), 1.04],   line: () => line.marks.Meera },
+  { wide: [box(-1.1, 0, -4.0, 3.9, 2.2, 0.4), 1.08], tall: [box(-0.8, 0, -4.0, 3.7, 2.1, -0.3), 1.0], line: () => line.marks.deskD },
+  { wide: [box(-4.4, 0, -1.3, 1.3, 1.2, 2.3), 1.08], tall: [box(-4.4, 0, -1.0, 0.9, 1.3, 2.1), 1.0],  line: () => line.marks.frontDesk },
+  { wide: [officeBox, 1.05],                         tall: [officeBox, 0.98],                         line: () => 1 },
 ];
+for (const b of BEATS) b.frame = () => viewForBox(...(portrait() ? b.tall : b.wide));
 
 let current = -1;
 let ctrl = null;
@@ -105,6 +108,22 @@ beatEls.forEach((el) => io.observe(el));
 dots.forEach((d, j) => d.addEventListener("click", () => {
   beatEls[j].scrollIntoView({ behavior: reduceMotion.matches ? "auto" : "smooth" });
 }));
+
+// Arrow and Page keys step exactly one beat while in the story
+const story = document.querySelector(".story");
+window.addEventListener("keydown", (e) => {
+  if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (e.target.closest?.("input, textarea, select, [contenteditable]")) return;
+  const dir = { ArrowDown: 1, PageDown: 1, ArrowUp: -1, PageUp: -1 }[e.key];
+  if (!dir) return;
+  const rect = story.getBoundingClientRect();
+  if (rect.bottom <= 1 || rect.top >= window.innerHeight - 1) return; // not in the story
+  const next = current + dir;
+  if (next < 0) return;
+  e.preventDefault();
+  const target = next < beatEls.length ? beatEls[next] : story.nextElementSibling;
+  target?.scrollIntoView({ behavior: reduceMotion.matches ? "auto" : "smooth" });
+});
 
 // Keep framing right when the screen size or orientation changes
 container.addEventListener("resize-scene", () => {

@@ -7,6 +7,10 @@
   --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --nav-h: 56px;
   --gutter: 16px;
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
   --fade: 0.7s;
   color-scheme: light;
 }
@@ -30,9 +34,9 @@ body {
 /* ---------- Nav ---------- */
 .nav {
   position: fixed; inset: 0 0 auto; z-index: 10;
-  height: var(--nav-h);
+  height: calc(var(--nav-h) + var(--safe-t));
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 var(--gutter);
+  padding: var(--safe-t) calc(var(--gutter) + var(--safe-r)) 0 calc(var(--gutter) + var(--safe-l));
 }
 .brand { text-decoration: none; color: var(--text); display: inline-flex; align-items: center; min-height: 44px; }
 .brand-text { font-weight: 800; letter-spacing: -0.01em; }
@@ -54,7 +58,7 @@ body {
 .beats { margin-top: -100vh; margin-top: -100svh; }
 .beat { height: 100vh; height: 100svh; scroll-snap-align: start; scroll-snap-stop: always; }
 
-.scene { position: relative; min-height: 0; padding-top: var(--nav-h); opacity: 0; transition: opacity 1.2s ease; }
+.scene { position: relative; min-height: 0; padding-top: calc(var(--nav-h) + var(--safe-t)); opacity: 0; transition: opacity 1.2s ease; }
 .scene.is-ready { opacity: 1; }
 .scene.is-fading { opacity: 0; transition-duration: 0.35s; }
 .scene canvas { display: block; width: 100%; height: 100%; }
@@ -63,7 +67,8 @@ body {
 .copy {
   position: absolute; inset: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: 0 var(--gutter) 24px;
+  text-align: center;
+  padding: 0 calc(var(--gutter) + var(--safe-r)) calc(56px + var(--safe-b)) calc(var(--gutter) + var(--safe-l));
   opacity: 0; transform: translateY(8px);
   transition: opacity 0.35s ease, transform 0.35s ease;
 }
@@ -76,23 +81,34 @@ body {
 }
 .copy p { margin: 0; font-size: clamp(1rem, 2.2vw, 1.25rem); color: var(--text-muted); max-width: 34ch; text-wrap: balance; }
 
-/* ---------- Progress dots ---------- */
+/* ---------- Progress dots: bottom on phones, right edge on larger screens ---------- */
 .dots {
-  position: fixed; right: 4px; top: 50%; transform: translateY(-50%); z-index: 10;
-  display: flex; flex-direction: column;
+  position: fixed; z-index: 10;
+  left: 50%; bottom: calc(4px + var(--safe-b)); transform: translateX(-50%);
+  display: flex; flex-direction: row;
 }
 .dots button {
-  width: 44px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer;
-  display: grid; place-items: center;
+  width: 44px; height: 44px; padding: 0; border: 0; background: none; cursor: pointer;
+  display: grid; place-items: center; border-radius: 50%;
 }
-.dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--dot); transition: background 0.4s, transform 0.4s; }
+.dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--dot); transition: background 0.4s, transform 0.4s; }
 .dots button:hover span { transform: scale(1.3); }
 .dots button.is-active span { background: var(--brand-red); }
+.dots.is-hidden { opacity: 0; pointer-events: none; }
 
-@media (min-width: 900px) {
+@media (min-width: 900px) and (min-height: 560px) {
   .stage { grid-template-rows: 70fr 30fr; }
-  .nav { padding: 0 32px; }
-  .dots { right: 16px; }
+  .nav { padding-left: 32px; padding-right: 32px; }
+  .copy { padding-bottom: 24px; }
+  .dots { left: auto; bottom: auto; right: calc(12px + var(--safe-r)); top: 50%; transform: translateY(-50%); flex-direction: column; }
+}
+
+/* Landscape phones: scene left, words right */
+@media (orientation: landscape) and (max-height: 559px) {
+  .stage { grid-template-rows: none; grid-template-columns: 58fr 42fr; }
+  .copy { padding: calc(var(--nav-h) + var(--safe-t)) calc(var(--gutter) + var(--safe-r)) 56px var(--gutter); }
+  .copy h2 { font-size: clamp(1.75rem, 4.6vw, 2.6rem); }
+  .dots { left: 79%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
