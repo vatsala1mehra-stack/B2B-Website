@@ -71,7 +71,7 @@ export async function goTo(i) {
   const { signal } = ctrl;
   const beat = BEATS[i];
   setDots(i);
-  showCopy(-1);
+  if (prev !== -1) showCopy(-1);   // beat 1's words are already on screen at load
 
   if (reduceMotion.matches || prev === -1) {
     // End state, revealed with a fade

@@ -21,6 +21,7 @@
   </script>
 </head>
 <body>
+  <a class="skip-link" href="#ending-title">Skip to plan and price</a>
   <header class="nav">
     <a class="brand" href="./" aria-label="Airtel Business — home">
       <!--
@@ -41,9 +42,12 @@
 
     <section class="story" aria-label="The story of a new office">
       <div class="stage">
-        <div class="scene" aria-hidden="true"><canvas></canvas></div>
+        <div class="scene" aria-hidden="true">
+          <canvas></canvas>
+          <img class="poster" src="assets/office-poster.jpg" alt="" width="899" height="694" loading="lazy" decoding="async">
+        </div>
         <div class="copies">
-          <div class="copy"><h2>Monday. Nothing works yet.</h2><p>A new team in a quiet, empty office.</p></div>
+          <div class="copy is-active"><h2>Monday. Nothing works yet.</h2><p>A new team in a quiet, empty office.</p></div>
           <div class="copy"><h2>Everyone, reachable.</h2><p>Every phone connected from the first minute.</p></div>
           <div class="copy"><h2>Online. And staying that way.</h2><p>Fast, steady internet at every desk.</p></div>
           <div class="copy"><h2>Open for customers.</h2><p>One number your customers can always reach.</p></div>
@@ -60,9 +64,17 @@
       </div>
     </section>
 
+    <nav class="dots" aria-label="Story progress">
+      <button type="button" aria-label="Beat 1: Monday. Nothing works yet."><span></span></button>
+      <button type="button" aria-label="Beat 2: Everyone, reachable."><span></span></button>
+      <button type="button" aria-label="Beat 3: Online. And staying that way."><span></span></button>
+      <button type="button" aria-label="Beat 4: Open for customers."><span></span></button>
+      <button type="button" aria-label="Beat 5: Safe. Simple. One partner."><span></span></button>
+    </nav>
+
     <section class="ending" aria-labelledby="ending-title">
       <div class="ending-inner">
-        <h2 id="ending-title">Your office. Taken care of.</h2>
+        <h2 id="ending-title" tabindex="-1">Your office. Taken care of.</h2>
         <dl class="specs"></dl>
         <p class="price">Price shown at checkout</p>
         <div class="ending-actions">
@@ -73,16 +85,10 @@
       <p class="fine-print">Products and prices are confirmed at checkout.</p>
     </section>
 
-    <nav class="dots" aria-label="Story progress">
-      <button type="button" aria-label="Beat 1: Monday. Nothing works yet."><span></span></button>
-      <button type="button" aria-label="Beat 2: Everyone, reachable."><span></span></button>
-      <button type="button" aria-label="Beat 3: Online. And staying that way."><span></span></button>
-      <button type="button" aria-label="Beat 4: Open for customers."><span></span></button>
-      <button type="button" aria-label="Beat 5: Safe. Simple. One partner."><span></span></button>
-    </nav>
   </main>
 
   <script type="module" src="main.js"></script>
-  <script type="module" src="story.js"></script>
+  <!-- If Three.js can't load, show the poster and a simple version of the story -->
+  <script type="module" src="story.js" onerror="document.documentElement.classList.add('no-3d', 'story-failed'); window.dispatchEvent(new Event('story-failed'))"></script>
 </body>
 </html>

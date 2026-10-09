@@ -42,3 +42,24 @@ if (specs && bundle) {
 
 const advisor = document.querySelector(".js-advisor");
 if (advisor) advisor.href = CONFIG.advisorUrl || CONFIG.checkoutUrl;
+
+/* ---------- Fallback story (no WebGL / Three.js unavailable) ---------- */
+// The 3D story lives in story.js. If it can't load, keep the words, dots and
+// keyboard working over the static poster.
+function fallbackStory() {
+  const copies = [...document.querySelectorAll(".copy")];
+  const dots = [...document.querySelectorAll(".dots button")];
+  const beats = [...document.querySelectorAll(".beat")];
+  const show = (i) => {
+    copies.forEach((c, j) => c.classList.toggle("is-active", j === i));
+    dots.forEach((d, j) => (j === i ? d.setAttribute("aria-current", "step") : d.removeAttribute("aria-current")));
+    dots.forEach((d, j) => d.classList.toggle("is-active", j === i));
+    document.querySelector(".dots").classList.toggle("is-hidden", i >= dots.length);
+  };
+  const io = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && show(+e.target.dataset.beat)), { rootMargin: "-50% 0px -50% 0px" });
+  beats.forEach((b) => io.observe(b));
+  dots.forEach((d, j) => d.addEventListener("click", () => beats[j].scrollIntoView()));
+}
+// story.js may fail before or after this module runs
+if (document.documentElement.classList.contains("story-failed")) fallbackStory();
+else window.addEventListener("story-failed", fallbackStory, { once: true });

@@ -95,12 +95,14 @@ function glowMaterial(color) {
   return new THREE.MeshBasicMaterial({ color: OFF.clone(), toneMapped: false, userData: { on: new THREE.Color(color) } });
 }
 
+const POOL_GEO = new THREE.PlaneGeometry(1, 1);
 function pool(x, y, z, r, { wall = false } = {}) {
   const m = new THREE.Mesh(
-    new THREE.PlaneGeometry(r * 2, r * 2),
+    POOL_GEO,
     new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2 })
   );
   m.position.set(x, y, z);
+  m.scale.set(r * 2, r * 2, 1);
   if (!wall) m.rotation.x = -Math.PI / 2;
   m.renderOrder = 1;
   scene.add(m);

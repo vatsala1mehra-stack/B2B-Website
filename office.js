@@ -263,7 +263,8 @@ export let renderer = null;
 try {
   renderer = new THREE.WebGLRenderer({ canvas, antialias: !LITE || devicePixelRatio < 2, alpha: true, powerPreference: "high-performance" });
 } catch (err) {
-  console.warn("WebGL unavailable; showing the page without the office scene.", err);
+  console.warn("WebGL unavailable; showing the poster instead.", err);
+  document.documentElement.classList.add("no-3d");
 }
 
 export const scene = new THREE.Scene();

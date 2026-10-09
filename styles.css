@@ -3,7 +3,7 @@
   --bg: #d3d4d7;          /* dim office grey; lighting.js warms it as the story progresses */
   --text: #1d1e22;
   --text-muted: #45474e;
-  --dot: rgb(29 30 34 / 0.28);
+  --dot: rgb(29 30 34 / 0.56);   /* 3:1 against the dim background */
   --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --nav-h: 56px;
   --gutter: 16px;
@@ -17,6 +17,11 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
+.skip-link {
+  position: fixed; left: 8px; top: 8px; z-index: 100; transform: translateY(-150%);
+  padding: 12px 16px; border-radius: 8px; background: var(--text); color: #fff; font-weight: 700; text-decoration: none;
+}
+.skip-link:focus { transform: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 html { scroll-snap-type: y mandatory; }
@@ -63,6 +68,23 @@ body {
 .scene.is-fading { opacity: 0; transition-duration: 0.35s; }
 .scene canvas { display: block; width: 100%; height: 100%; }
 
+/* Loading: a faint outline of the room while the scene builds (no spinner) */
+.stage::before {
+  content: ""; position: absolute; left: 50%; top: calc(var(--nav-h) + (60svh - var(--nav-h)) / 2);
+  width: min(56vw, 360px); aspect-ratio: 1; translate: -50% -50%;
+  border: 1.5px solid rgb(29 30 34 / 0.14); border-radius: 6%;
+  transform: scaleY(0.58) rotate(45deg);
+  transition: opacity 0.8s ease; pointer-events: none;
+}
+.stage:has(.scene.is-ready)::before, .no-3d .stage::before { opacity: 0; }
+
+/* No WebGL: the poster of the finished office stands in for the scene */
+.poster { display: none; }
+.no-3d { --bg: #f4efe9; }  /* match the poster's warm background */
+.no-3d .scene { opacity: 1; }
+.no-3d .scene canvas { display: none; }
+.no-3d .poster { display: block; width: 100%; height: 100%; object-fit: contain; padding: 8px var(--gutter); }
+
 .copies { position: relative; }
 .copy {
   position: absolute; inset: 0;
@@ -98,6 +120,7 @@ body {
 
 @media (min-width: 900px) and (min-height: 560px) {
   .stage { grid-template-rows: 70fr 30fr; }
+  .stage::before { top: calc(var(--nav-h) + (70svh - var(--nav-h)) / 2); }
   .nav { padding-left: 32px; padding-right: 32px; }
   .copy { padding-bottom: 24px; }
   .dots { left: auto; bottom: auto; right: calc(12px + var(--safe-r)); top: 50%; transform: translateY(-50%); flex-direction: column; }
@@ -109,6 +132,7 @@ body {
   .copy { padding: calc(var(--nav-h) + var(--safe-t)) calc(var(--gutter) + var(--safe-r)) 56px var(--gutter); }
   .copy h2 { font-size: clamp(1.75rem, 4.6vw, 2.6rem); }
   .dots { left: 79%; }
+  .stage::before { left: 29%; top: 55%; width: min(34vw, 240px); }
 }
 
 /* ---------- Ending: calm white section ---------- */
@@ -121,6 +145,7 @@ body {
   padding: calc(var(--nav-h) + var(--safe-t) + 32px) calc(var(--gutter) + var(--safe-r)) calc(16px + var(--safe-b)) calc(var(--gutter) + var(--safe-l));
 }
 .ending-inner { width: 100%; max-width: 560px; margin: auto; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.ending h2:focus { outline: none; }
 .ending h2 {
   margin: 0 0 32px; text-align: center;
   font-size: clamp(2.25rem, 9vw, 4.25rem); line-height: 1.04; letter-spacing: -0.035em; font-weight: 800;

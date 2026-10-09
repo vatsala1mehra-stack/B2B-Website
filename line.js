@@ -141,8 +141,9 @@ export function createLine() {
   // A very faint pulse travelling along the drawn part, then a rest.
   const SPEED = 2.2;   // world units per second
   let pulseAt = 0;
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)");
   onFrame((dt) => {
-    if (drawn <= 0) return false;
+    if (drawn <= 0 || still.matches) { uniforms.uPulse.value = -1; return false; }
     const drawnLen = drawn * length;
     pulseAt += dt * SPEED;
     if (pulseAt > drawnLen + 6) pulseAt = 0;   // pause between pulses
