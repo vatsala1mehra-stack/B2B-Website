@@ -141,7 +141,7 @@ export function posesForBeat(beat) {
     { Riya: P.relaxedChair(desk("deskC")), Arjun: P.typing(desk("deskA")), Meera: P.typing(desk("deskB")), Kabir: P.call(fd) },
     { Riya: P.relaxedChair(desk("deskC")), Arjun: P.sofa(sofa[1], -0.5), Meera: P.sofa(sofa[0], 0.5), Kabir: P.frontDesk(fd) },
   ];
-  return all[beat];
+  return all[Math.min(beat, all.length - 1)];
 }
 
 if (renderer) {

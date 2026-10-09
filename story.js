@@ -24,8 +24,11 @@ const BEATS = [
   { wide: [box(-1.1, 0, -4.0, 3.9, 2.2, 0.4), 1.08], tall: [box(-0.8, 0, -4.0, 3.7, 2.1, -0.3), 1.0], line: () => line.marks.deskD },
   { wide: [box(-4.4, 0, -1.3, 1.3, 1.2, 2.3), 1.08], tall: [box(-4.4, 0, -1.0, 0.9, 1.3, 2.1), 1.0],  line: () => line.marks.frontDesk },
   { wide: [officeBox, 1.05],                         tall: [officeBox, 0.98],                         line: () => 1 },
+  // The ending: the camera rises over the fully lit office
+  { wide: [officeBox, 1.16], tall: [officeBox, 1.04], dir: new THREE.Vector3(1, 1.55, 1).normalize(), line: () => 1 },
 ];
-for (const b of BEATS) b.frame = () => viewForBox(...(portrait() ? b.tall : b.wide));
+for (const b of BEATS) b.frame = () => viewForBox(...(portrait() ? b.tall : b.wide), b.dir);
+const dotsNav = document.querySelector(".dots");
 
 let current = -1;
 let ctrl = null;
@@ -34,6 +37,7 @@ function showCopy(i) {
   copies.forEach((c, j) => c.classList.toggle("is-active", j === i));
 }
 function setDots(i) {
+  dotsNav.classList.toggle("is-hidden", i >= dots.length);
   dots.forEach((d, j) => {
     d.classList.toggle("is-active", j === i);
     if (j === i) d.setAttribute("aria-current", "step"); else d.removeAttribute("aria-current");
@@ -83,7 +87,7 @@ export async function goTo(i) {
 
   if (i === prev + 1) {
     // One thing at a time
-    if (!(await glide(beat.frame(), 1.3, signal))) return;
+    if (!(await glide(beat.frame(), i === BEATS.length - 1 ? 1.6 : 1.3, signal))) return;
     if (!(await line.growTo(beat.line(), { duration: 1.5, signal }))) return;
     if (!(await wait(0.15, signal))) return;
     if (!(await poseBeat(i, { duration: 1.2, signal }))) return;

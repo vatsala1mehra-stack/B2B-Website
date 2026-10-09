@@ -21,9 +21,28 @@ export const CONFIG = {
   // Leave empty ("") and the form will send people to checkoutUrl instead.
   leadEndpoint: "",
 
-  // Link to the downloadable founder's guide (PDF etc.).
-  // Leave empty ("") to hide the guide button.
+  // Link to the downloadable founder's guide (PDF etc.). Not shown on the page yet.
   guideUrl: "",
+
+  // Where "Talk to an advisor" goes (a contact page or a tel: link).
+  // Leave empty ("") to use checkoutUrl.
+  advisorUrl: "",
+
+  // The bundle shown at the end of the story. Each line names products from
+  // the catalogue below (by exact name); their SKUs are sent to checkout.
+  // price: a number in INR per month, or null to show "Price shown at checkout".
+  officeBundle: {
+    plan: "New office",
+    price: null,
+    lines: [
+      { area: "Phones",    label: "Business postpaid",                  products: ["Business Postpaid"] },
+      { area: "Internet",  label: "Airtel Office Internet",             products: ["Airtel Office Internet"] },
+      { area: "Workspace", label: "Google Workspace",                   products: ["Google Workspace"] },
+      { area: "Customers", label: "Toll-free + Airtel IQ",              products: ["Toll-Free Number", "Airtel IQ Business Calling"] },
+      { area: "Security",  label: "Cloud & cybersecurity",              products: ["Cloud Hosting", "Cybersecurity Suite"] },
+      { area: "Support",   label: "One bill, one relationship manager", products: ["Dedicated Relationship Manager"] },
+    ],
+  },
 
   products: [
     // ---- Mobility ----
