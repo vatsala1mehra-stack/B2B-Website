@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Airtel Business — Your office, taken care of</title>
+  <meta name="description" content="Phones, internet, customers and security for your new office — one partner, one bill.">
+  <meta name="theme-color" content="#d3d4d7">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Manrope is a stand-in for the official brand typeface (see --font-sans in styles.css). -->
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="./" aria-label="Airtel Business — home">
+      <!--
+        ===================== BRAND SLOT =====================
+        Place the official Airtel Business logo file here, e.g.:
+          <img src="assets/airtel-business-logo.svg" alt="Airtel Business" height="24">
+        Use only the file supplied by the brand team. Do not redraw,
+        recolour or recreate the logo. Delete the text below once it is in place.
+        ======================================================
+      -->
+      <span class="brand-text">Airtel Business</span>
+    </a>
+    <a class="nav-buy js-checkout" href="https://www.airtel.in/business/">Buy online</a>
+  </header>
+
+  <main class="stage">
+    <div class="scene" aria-hidden="true"><canvas></canvas></div>
+    <div class="copy">
+      <h1>Monday. Nothing works yet.</h1>
+      <p>A new team, a new office, and nothing set up.</p>
+    </div>
+    <ol class="dots" aria-hidden="true">
+      <li class="is-active"></li><li></li><li></li><li></li><li></li>
+    </ol>
+  </main>
+
+  <script type="module" src="main.js"></script>
+  <script type="module" src="office.js"></script>
+</body>
+</html>
