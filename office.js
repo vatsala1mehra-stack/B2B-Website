@@ -19,7 +19,7 @@ export const CURVE = LITE ? 14 : 22;      // sphere/capsule/cylinder segments
 /*  Look: shared uniforms so later beats can warm and saturate the room */
 /* ------------------------------------------------------------------ */
 export const look = {
-  saturation: { value: 0.45 }, // 1 = full colour; the office starts drained
+  saturation: { value: 0.3 }, // 1 = full colour; the office starts drained
 };
 
 const SAT_CHUNK = `#include <dithering_fragment>
@@ -326,13 +326,13 @@ if (renderer) {
   renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.shadowMap.autoUpdate = false;   // re-rendered only when something moves
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.78;     // dim: nobody has switched anything on
+  renderer.toneMappingExposure = 0.7;      // dim: nobody has switched anything on
 
   buildOffice();
   scene.add(office);
   officeBox.setFromObject(office);
 
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.ShadowMaterial({ opacity: 0.12 }));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.ShadowMaterial({ opacity: 0.07 }));
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.32;
   ground.receiveShadow = true;
@@ -345,9 +345,9 @@ if (renderer) {
   sun.position.set(-5, 14, 7);
   sun.castShadow = true;
   sun.shadow.mapSize.setScalar(LITE ? 1024 : 2048);
-  sun.shadow.radius = 5;
-  sun.shadow.bias = -0.0006;
-  sun.shadow.normalBias = 0.04;
+  sun.shadow.radius = 7;
+  sun.shadow.bias = -0.0015;
+  sun.shadow.normalBias = 0.06;
   Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 30 });
   scene.add(sun);
   lights.sun = sun;

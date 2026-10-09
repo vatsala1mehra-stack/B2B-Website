@@ -193,8 +193,8 @@ export let warmth = 0;
 function applyRoom() {
   warmth = zones.reduce((s, z) => s + z.level * z.weight, 0) / (totalWeight || 1);
   const g = warmth;
-  look.saturation.value = 0.45 + 0.55 * g;
-  if (renderer) renderer.toneMappingExposure = 0.78 + 0.3 * g;
+  look.saturation.value = 0.3 + 0.7 * g;
+  if (renderer) renderer.toneMappingExposure = 0.7 + 0.38 * g;
   if (lights.hemi) {
     lights.hemi.color.copy(COOL_SKY).lerp(WARM_SKY, g);
     lights.hemi.groundColor.copy(COOL_GROUND).lerp(WARM_GROUND, g);

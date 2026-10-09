@@ -87,9 +87,9 @@ export async function goTo(i) {
 
   if (i === prev + 1) {
     // One thing at a time
-    if (!(await glide(beat.frame(), i === BEATS.length - 1 ? 1.6 : 1.3, signal))) return;
-    if (!(await line.growTo(beat.line(), { duration: 1.5, signal }))) return;
-    if (!(await wait(0.15, signal))) return;
+    if (!(await glide(beat.frame(), i === BEATS.length - 1 ? 1.5 : 1.2, signal))) return;
+    if (!(await line.growTo(beat.line(), { duration: 1.4, signal }))) return;
+    if (!(await wait(0.1, signal))) return;
     if (!(await poseBeat(i, { duration: 1.2, signal }))) return;
   } else {
     // A jump: everything settles together, once
@@ -125,7 +125,7 @@ window.addEventListener("keydown", (e) => {
   const next = current + dir;
   if (next < 0) return;
   e.preventDefault();
-  const target = next < beatEls.length ? beatEls[next] : story.nextElementSibling;
+  const target = next < beatEls.length ? beatEls[next] : document.querySelector(".ending");
   target?.scrollIntoView({ behavior: reduceMotion.matches ? "auto" : "smooth" });
 });
 

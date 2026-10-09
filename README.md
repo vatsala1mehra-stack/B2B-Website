@@ -1,85 +1,61 @@
-# Airtel Business — Founders site
+# Airtel Business — "Your office. Taken care of."
 
-A static marketing site for Airtel Business aimed at new-age B2B founders in India.
-Plain HTML, CSS and JavaScript — no build step, no dependencies to install.
-It runs as-is on GitHub Pages or any static host.
+A scroll story for new-age B2B founders in India: a dim, empty office comes to
+life as one red line (Airtel) runs through it, connecting the team, the
+internet, customers and security, then ends with a calm "Buy online" screen.
+
+Plain HTML, CSS and JavaScript. No build step, no 3D model files: everything is
+built in code with Three.js 0.160, loaded from cdn.jsdelivr.net via the import
+map in `office.html`. Runs as-is on GitHub Pages.
+
+**Every change must follow the design brief in [`CLAUDE.md`](CLAUDE.md).**
 
 ## Files
 
 | File | What it is | Who edits it |
 | --- | --- | --- |
-| `config.js` | **The single place to change site content**: checkout link, lead form endpoint, guide link and the product catalogue. | Business team |
-| `index.html` | Page structure and copy (hero, solutions, why Airtel, contact form). Holds the Three.js import map and the **BRAND SLOT** for the official logo. | Web / marketing |
-| `styles.css` | All styling. Brand colours, font and spacing are CSS variables at the top (`:root`). | Web |
-| `main.js` | Reads `config.js`, renders the product catalogue and category filters, manages the “Your plan” selection, and submits the lead form. | Web |
-| `scene.js` | The decorative 3D network globe in the hero, built with Three.js 0.160. | Web |
-| `.nojekyll` | Tells GitHub Pages to serve files as-is without Jekyll processing. | — |
+| `config.js` | **The single place to change content**: checkout URL, advisor link, lead endpoint, guide URL, the product catalogue (name, category, SKU, price) and `officeBundle` (the plan shown at the end). | Business team |
+| `office.html` | The page: nav with the **BRAND SLOT**, the five beats' headlines (real HTML text), progress dots and the ending section. | Web / marketing |
+| `index.html` | Redirects the site root to `office.html`. | — |
+| `styles.css` | All styling. Colours, font and spacing are CSS variables at the top. Mobile-first: scene top 60%, words bottom 40%. | Web |
+| `main.js` | Fills links, the ending spec list, price and Buy online URL from `config.js`. Also runs a simple fallback story if 3D can't load. | Web |
+| `office.js` | The clay office: materials, furniture, layout, renderer, camera and the render loop (paused off screen / in hidden tabs). | Web |
+| `line.js` | The red line: one path through named waypoints, `growTo(t)` with smooth easing, and a faint pulse. | Web |
+| `lighting.js` | The light-up system: each area warms over ~1.4s when the line reaches it; the whole room warms with progress. | Web |
+| `people.js` | The four figurines (Riya, Arjun, Meera, Kabir) and their poses for each beat. | Web |
+| `story.js` | The five beats: scroll / dots / arrow keys pick a beat; camera glide → line → posture → words. | Web |
+| `anim.js` | Tiny tween helper and the site's one easing curve. | Web |
+| `assets/office-poster.jpg` | Static image of the finished office, shown if WebGL or Three.js is unavailable. | — |
+| `CLAUDE.md` | The design brief. | Design |
 
 ## Editing `config.js`
 
-```js
-export const CONFIG = {
-  checkoutUrl: "https://www.airtel.in/business/", // where "Get started" buttons go
-  leadEndpoint: "",   // URL that receives the lead form as JSON (POST)
-  guideUrl: "",       // founder's guide download; empty hides the button
-  products: [
-    { name: "Business Postpaid", category: "Mobility", sku: "SKU-TBD-POSTPAID", price: null, blurb: "…" },
-    // …
-  ],
-};
-```
+- **checkoutUrl**: where Buy online goes. The ending's button adds
+  `?plan=New office&items=SKU1,SKU2,…&utm_source=office_story`.
+- **advisorUrl**: where "Talk to an advisor" goes (a contact page or `tel:` link). Empty uses `checkoutUrl`.
+- **leadEndpoint**, **guideUrl**: kept for later; not used on the page right now.
+- **products**: `name`, `category`, `sku`, `price` (INR per month or `null`). SKUs are placeholders (`SKU-TBD-…`).
+- **officeBundle**: `plan`, `price` (`null` shows "Price shown at checkout") and `lines`. Each line has an
+  `area`, the `label` shown, and `products` — exact names from the catalogue, whose SKUs go to checkout.
 
-- **price** — a number in INR per month (e.g. `499`), shown as “₹499 /mo”. Use `null` to show “Pricing on request”.
-- **category** — products are grouped into filter chips by category. Spell each category identically across products.
-- **sku** — the SKUs in the file are placeholders (`SKU-TBD-…`). Replace them with real codes; they are sent with every lead.
-- **blurb** — one-line description shown on the product card.
-- To add or remove a product, add or delete a `{ … },` line. Keep the commas and quotes — a syntax error stops the page from loading. Open the page after editing to check.
-
-### Lead form behaviour
-
-- **`leadEndpoint` set:** the form POSTs JSON to that URL:
-  ```json
-  {
-    "name": "…", "company": "…", "email": "…", "phone": "…",
-    "teamSize": "11-50", "notes": "…",
-    "products": [{ "name": "Business Postpaid", "sku": "SKU-TBD-POSTPAID", "category": "Mobility" }],
-    "source": "https://…", "submittedAt": "2026-10-09T10:00:00.000Z"
-  }
-  ```
-  Any 2xx response counts as success. The endpoint must allow cross-origin requests (CORS) from the site’s domain.
-- **`leadEndpoint` empty:** after validation the visitor is sent to `checkoutUrl` to complete their enquiry there.
+Keep the commas and quotes; a syntax error stops the page loading. Open the page after editing.
 
 ## Brand
 
-- Accent colour is Airtel red `#e40000` (`--brand-red` in `styles.css`). All colours are CSS variables; the site also follows the visitor’s light/dark preference.
-- **Manrope** (Google Fonts) is a stand-in typeface. To switch, change the font link in `index.html` and `--font-sans` in `styles.css`.
-- **The Airtel logo is intentionally not drawn.** Look for the `BRAND SLOT` comment in `index.html` header: drop in the official file supplied by the brand team (e.g. `assets/airtel-business-logo.svg`) and remove the placeholder text wordmark.
-
-## Three.js
-
-Three.js **0.160.0** is loaded from `cdn.jsdelivr.net` via the import map in `index.html`:
-
-```html
-<script type="importmap">
-  { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
-</script>
-```
-
-The hero animation pauses when off-screen or in a background tab, shows a still frame for visitors who prefer reduced motion, and falls back to the CSS gradient if WebGL or the CDN is unavailable.
+- Airtel red `#e40000` (`--brand-red`) is used only for the line and key accents.
+- **Manrope** is a stand-in typeface. To switch, change the font link in `office.html` and `--font-sans` in `styles.css`.
+- **The Airtel logo is intentionally not drawn.** Put the official file in the `BRAND SLOT` in `office.html`.
 
 ## Running locally
 
-ES modules don’t load from `file://`, so serve the folder over HTTP:
+ES modules don't load from `file://`, so serve the folder:
 
 ```sh
 python3 -m http.server 8000
-# then open http://localhost:8000
+# open http://localhost:8000
 ```
 
 ## Deploying to GitHub Pages
 
-1. Push to GitHub.
-2. In the repository go to **Settings → Pages**.
-3. Under **Build and deployment**, choose **Deploy from a branch**, select the branch (e.g. `main`) and folder `/ (root)`, and save.
-
-All asset paths are relative, so the site works at `https://<user>.github.io/<repo>/` as well as on a custom domain.
+Settings → Pages → Deploy from a branch → pick the branch and `/ (root)` → Save.
+All paths are relative, so it works at `https://<user>.github.io/<repo>/`.
