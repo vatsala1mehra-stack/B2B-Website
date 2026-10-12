@@ -36,20 +36,72 @@ body {
 }
 :focus-visible { outline: 3px solid var(--brand-red); outline-offset: 3px; border-radius: 6px; }
 
-/* ---------- Nav ---------- */
+/* ---------- Nav: like a live B2B site ---------- */
 .nav {
-  position: fixed; inset: 0 0 auto; z-index: 10;
+  position: fixed; inset: 0 0 auto; z-index: 20;
   height: calc(var(--nav-h) + var(--safe-t));
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; gap: 24px;
   padding: var(--safe-t) calc(var(--gutter) + var(--safe-r)) 0 calc(var(--gutter) + var(--safe-l));
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
+.nav.is-solid { background: rgb(255 255 255 / 0.94); box-shadow: 0 1px 0 rgb(0 0 0 / 0.06); }
 .brand { text-decoration: none; color: var(--text); display: inline-flex; align-items: center; min-height: 44px; }
 .brand-text { font-weight: 800; letter-spacing: -0.01em; }
-.nav-buy {
-  display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px;
-  font-weight: 700; color: var(--text); text-decoration: none;
+.menu { display: none; align-items: center; gap: 4px; }
+.menu-item { position: relative; }
+.menu-trigger, .menu-link {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px;
+  font: inherit; font-weight: 600; font-size: 0.9375rem; color: var(--text); text-decoration: none;
+  background: none; border: 0; cursor: pointer; border-radius: 8px;
 }
-.nav-buy:hover { color: var(--brand-red); }
+.menu-trigger::after { content: ""; width: 6px; height: 6px; border-right: 1.5px solid; border-bottom: 1.5px solid; transform: rotate(45deg) translate(-2px, -2px); }
+.menu-trigger:hover, .menu-link:hover { color: var(--brand-red); }
+.menu-panel {
+  position: absolute; left: 0; top: calc(100% + 6px); min-width: 300px;
+  display: none; flex-direction: column; gap: 2px; padding: 10px;
+  background: #fff; border-radius: 14px; box-shadow: 0 12px 40px rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.04);
+}
+.menu-trigger[aria-expanded="true"] + .menu-panel { display: flex; }
+.menu-panel a { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; color: var(--text); text-decoration: none; min-height: 44px; justify-content: center; }
+.menu-panel a:hover, .menu-panel a:focus-visible { background: #f4f2ef; }
+.menu-panel a span { font-size: 0.875rem; color: var(--text-muted); }
+.menu-products { flex-direction: row; flex-wrap: wrap; gap: 4px 20px; width: min(720px, 80vw); padding: 18px; }
+.menu-trigger[aria-expanded="true"] + .menu-products { display: flex; }
+.menu-group { flex: 1 1 180px; display: flex; flex-direction: column; }
+.menu-group-title { margin: 4px 12px 2px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+.menu-products a { padding: 8px 12px; font-size: 0.9375rem; }
+.nav-actions { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.nav-sales { display: none; }
+.nav-sales, .nav-buy {
+  align-items: center; min-height: 44px; padding: 0 12px; border-radius: 999px;
+  font-weight: 700; font-size: 0.9375rem; color: var(--text); text-decoration: none;
+}
+.nav-buy { display: inline-flex; box-shadow: inset 0 0 0 1.5px currentColor; }
+.nav-buy:hover, .nav-sales:hover { color: var(--brand-red); }
+.menu-toggle {
+  width: 44px; height: 44px; border: 0; background: none; cursor: pointer; border-radius: 10px;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+}
+.menu-toggle span { width: 20px; height: 2px; background: var(--text); border-radius: 2px; transition: transform 0.25s ease; }
+.menu-toggle[aria-expanded="true"] span:first-child { transform: translateY(4px) rotate(45deg); }
+.menu-toggle[aria-expanded="true"] span:last-child { transform: translateY(-4px) rotate(-45deg); }
+.mobile-menu {
+  position: fixed; inset: calc(var(--nav-h) + var(--safe-t)) 0 0; z-index: 19;
+  background: #fff; overflow-y: auto;
+  padding: 8px calc(var(--gutter) + var(--safe-r)) calc(24px + var(--safe-b)) calc(var(--gutter) + var(--safe-l));
+  display: flex; flex-direction: column;
+}
+.mobile-menu[hidden] { display: none; }
+.mobile-menu a { display: flex; align-items: center; min-height: 52px; font-size: 1.125rem; font-weight: 700; color: var(--text); text-decoration: none; border-bottom: 1px solid #eeece8; }
+.mobile-heading { margin: 20px 0 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+.menu-open .nav { background: #fff; }
+.menu-open body { overflow: hidden; }
+
+@media (min-width: 960px) {
+  .menu { display: flex; }
+  .nav-sales { display: inline-flex; }
+  .menu-toggle, .mobile-menu { display: none !important; }
+}
 
 /* ---------- Story: sticky stage over five scroll beats ---------- */
 .story { position: relative; }
@@ -65,13 +117,10 @@ body {
 
 .scene { position: relative; min-height: 0; padding-top: calc(var(--nav-h) + var(--safe-t)); }
 
-/* The canvas fills the scene box (below the nav); its background matches the page exactly */
+/* Full-bleed scene: the canvas fills the stage and the words sit directly on it.
+   No overlays. Each beat frames its important area inside .scene (top 60% on phones). */
 .stage-canvas {
-  position: absolute; left: 0; right: 0; bottom: 0; top: calc(var(--nav-h) + var(--safe-t));
-  width: 100%; height: calc(100% - var(--nav-h) - var(--safe-t)); display: block;
-  /* Fade the scene's top and bottom into the page: no box, no band behind the words */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 7%, #000 74%, transparent 100%);
-          mask-image: linear-gradient(to bottom, transparent 0, #000 7%, #000 74%, transparent 100%);
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
   opacity: 0; transition: opacity 1.2s ease;
 }
 .stage.is-ready .stage-canvas { opacity: 1; }
@@ -106,13 +155,37 @@ body {
   transition: opacity 0.35s ease, transform 0.35s ease;
 }
 .copy.is-active { opacity: 1; transform: none; transition-duration: var(--fade); }
+.copy { pointer-events: none; }
+.copy.is-active { pointer-events: auto; }
+/* The opening choices can't be tabbed to while another step is showing */
+.copy-intro:not(.is-active) { visibility: hidden; transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0.35s; }
 .copy h2 {
   margin: 0 0 12px;
-  font-size: clamp(2rem, 8.5vw, 4.25rem);
+  font-size: clamp(2rem, 8.2vw, 3.75rem);
   line-height: 1.05; letter-spacing: -0.035em; font-weight: 800;
-  max-width: 14ch; text-wrap: balance;
+  max-width: 15ch; text-wrap: balance;
 }
-.copy p { margin: 0; font-size: clamp(1rem, 2.2vw, 1.25rem); color: var(--text-muted); max-width: 34ch; text-wrap: balance; }
+.copy p { margin: 0; font-size: clamp(1rem, 2.2vw, 1.25rem); color: var(--text-muted); max-width: 36ch; text-wrap: balance; }
+.copy .eyebrow {
+  margin: 0 0 10px; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
+}
+.copy .get {
+  margin-top: 14px; font-size: 1rem; color: var(--text); font-weight: 600; max-width: 40ch;
+}
+.get-label {
+  display: inline-block; margin-right: 8px; padding: 2px 8px; border-radius: 999px;
+  font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--brand-red); box-shadow: inset 0 0 0 1.5px var(--brand-red);
+}
+.moves { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; width: min(100%, 360px); }
+.move {
+  min-height: 52px; padding: 0 22px; border-radius: 999px; cursor: pointer;
+  font: inherit; font-weight: 700; font-size: 1.0625rem; color: var(--text);
+  background: rgb(255 255 255 / 0.9); border: 0; box-shadow: inset 0 0 0 1.5px rgb(29 30 34 / 0.18), 0 6px 20px rgb(0 0 0 / 0.06);
+  transition: box-shadow 0.2s, color 0.2s;
+}
+.move:hover { color: var(--brand-red); box-shadow: inset 0 0 0 1.5px var(--brand-red), 0 6px 20px rgb(0 0 0 / 0.08); }
+@media (min-width: 720px) { .moves { flex-direction: row; width: auto; } }
 
 /* ---------- Progress dots: bottom on phones, right edge on larger screens ---------- */
 .dots {
@@ -130,8 +203,8 @@ body {
 .dots.is-hidden { opacity: 0; pointer-events: none; }
 
 @media (min-width: 900px) and (min-height: 560px) {
-  .stage { grid-template-rows: 70fr 30fr; }
-  .stage::before { top: calc(var(--nav-h) + (70svh - var(--nav-h)) / 2); }
+  .stage { grid-template-rows: 62fr 38fr; }
+  .stage::before { top: calc(var(--nav-h) + (62svh - var(--nav-h)) / 2); }
   .nav { padding-left: 32px; padding-right: 32px; }
   .copy { padding-bottom: 24px; }
   .dots { left: auto; bottom: auto; right: calc(12px + var(--safe-r)); top: 50%; transform: translateY(-50%); flex-direction: column; }
@@ -185,6 +258,52 @@ body {
   .btn-buy { width: 100%; }
   .specs div { grid-template-columns: 6.5rem 1fr; }
 }
+
+/* Plan: path name and switch links */
+.ending .eyebrow { margin: 0 0 10px; text-align: center; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #5b5d64; }
+.switch-path { margin: 20px 0 0; text-align: center; color: #5b5d64; }
+.switch-path a { color: var(--text); font-weight: 700; }
+.switch-path a:hover { color: var(--brand-red); }
+
+/* ---------- Why Airtel: credibility ---------- */
+.why {
+  position: relative; z-index: 11; background: #ffffff; scroll-snap-align: start;
+  padding: calc(var(--nav-h) + var(--safe-t) + 40px) calc(var(--gutter) + var(--safe-r)) 0 calc(var(--gutter) + var(--safe-l));
+  border-top: 1px solid #eeece8;
+}
+.why-inner { max-width: 1080px; margin: 0 auto; }
+.why h2 { margin: 0 0 32px; font-size: clamp(1.75rem, 6vw, 3rem); line-height: 1.08; letter-spacing: -0.03em; font-weight: 800; text-align: center; text-wrap: balance; }
+.stats { list-style: none; margin: 0 0 40px; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px 16px; }
+.stats li { display: flex; flex-direction: column; gap: 4px; text-align: center; }
+.stats strong { font-size: clamp(1.75rem, 6vw, 2.75rem); font-weight: 800; letter-spacing: -0.03em; color: var(--brand-red); }
+.stats span { color: #5b5d64; }
+.logos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0 0 40px; }
+.logo-slot {
+  display: grid; place-items: center; min-height: 64px; border-radius: 12px;
+  border: 1.5px dashed #d8d5d0; color: #9a9893; font-size: 0.8125rem; font-weight: 600;
+}
+.quote { margin: 0 auto 32px; max-width: 720px; text-align: center; }
+.quote blockquote { margin: 0 0 12px; }
+.quote blockquote p { margin: 0; font-size: clamp(1.125rem, 3.5vw, 1.5rem); line-height: 1.4; font-weight: 600; text-wrap: balance; }
+.quote figcaption { color: #5b5d64; }
+.badges { list-style: none; margin: 0 0 56px; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.badges li { padding: 8px 14px; border-radius: 999px; background: #f4f2ef; font-weight: 600; font-size: 0.9375rem; }
+/* Placeholder values are visibly marked until Airtel supplies verified facts */
+.is-placeholder, .is-placeholder strong { color: #9a9893 !important; }
+.badges li.is-placeholder { background: none; border: 1.5px dashed #d8d5d0; }
+@media (min-width: 720px) {
+  .stats { grid-template-columns: repeat(4, 1fr); }
+  .logos { grid-template-columns: repeat(6, 1fr); }
+}
+
+/* ---------- Footer ---------- */
+.footer { max-width: 1080px; margin: 0 auto; padding: 32px 0 calc(24px + var(--safe-b)); border-top: 1px solid #eeece8; }
+.footer-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 24px; margin-bottom: 28px; }
+.footer-heading { margin: 0 0 8px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #5b5d64; }
+.footer a { display: flex; align-items: center; min-height: 36px; color: var(--text); text-decoration: none; }
+.footer a:hover { color: var(--brand-red); }
+.footer-legal { display: flex; flex-wrap: wrap; gap: 4px 20px; align-items: center; font-size: 0.875rem; color: #5b5d64; }
+.footer-legal a { min-height: 44px; color: #5b5d64; }
 
 @media (prefers-reduced-motion: reduce) {
   .copy { transform: none; }

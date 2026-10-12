@@ -1,47 +1,95 @@
-// The five-beat story. Scrolling (or a dot, or an arrow key) picks a beat;
-// each beat plays as a calm sequence: camera glides → line grows and the
-// area lights up → people change posture → the words fade in.
+// The story: "What's your move?" then five beats for the chosen path
+// (set up, expand or switch), then the ending. Scrolling, the dots or the
+// arrow keys pick a step; each beat plays as a calm sequence:
+// camera glides → the scene changes (one thing at a time) → people change
+// posture → the words fade in. Switching path fades to the new state.
 import * as THREE from "three";
-import { renderer, view, applyView, viewForBox, officeBox, requestRender, container, sceneRect } from "./office.js";
+import { renderer, view, applyView, viewForBox, officeBox, container, sceneRect } from "./office.js";
 import { line } from "./line.js";
-import { snap as snapLights } from "./lighting.js";
-import { poseBeat } from "./people.js";
+import { snap as snapLights, setBaseline } from "./lighting.js";
+import { posePeople } from "./people.js";
+import { annexLine, annexBox, setAnnex, setExtraDesks, setGrey, setHiresPhones } from "./expansion.js";
+import { site } from "./main.js";
 import { tween, wait } from "./anim.js";
 import "./leaves.js";
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-const copies = [...document.querySelectorAll(".copy")];
-const dots = [...document.querySelectorAll(".dots button")];
 const beatEls = [...document.querySelectorAll(".beat")];
+const dotsNav = document.querySelector(".dots");
+const dots = [...dotsNav.querySelectorAll("button")];
+const LAST = beatEls.length - 1;   // the ending step
 
 const box = (x1, y1, z1, x2, y2, z2) => new THREE.Box3(new THREE.Vector3(x1, y1, z1), new THREE.Vector3(x2, y2, z2));
-
-// What each beat frames and how far the line has travelled. Portrait screens
-// get a tighter box around the part of the room that matters in that beat.
+const RISE = new THREE.Vector3(1, 1.55, 1).normalize();
 const portrait = () => { const r = sceneRect(); return r.w / r.h < 1; };
-const BEATS = [
-  { wide: [box(0.6, 0, 0.6, 3.5, 1.8, 2.8), 1.3],    tall: [box(0.8, 0.2, 0.8, 3.3, 1.8, 2.6), 1.12], line: () => 0 },
-  { wide: [box(0.6, 0, 0.4, 5.3, 1.8, 3.3), 1.12],   tall: [box(0.6, 0, 0.5, 4.6, 1.8, 3.2), 1.04],   line: () => line.marks.Meera },
-  { wide: [box(-1.1, 0, -4.0, 3.9, 2.2, 0.4), 1.08], tall: [box(-0.8, 0, -4.0, 3.7, 2.1, -0.3), 1.0], line: () => line.marks.deskD },
-  { wide: [box(-4.4, 0, -1.3, 1.3, 1.2, 2.3), 1.08], tall: [box(-4.4, 0, -1.0, 0.9, 1.3, 2.1), 1.1],  line: () => line.marks.frontDesk },
-  { wide: [officeBox, 1.05],                         tall: [officeBox, 0.98],                         line: () => 1 },
-  // The ending: the camera rises over the fully lit office
-  { wide: [officeBox, 1.16], tall: [officeBox, 1.04], dir: new THREE.Vector3(1, 1.55, 1).normalize(), line: () => 1 },
-];
-for (const b of BEATS) b.frame = () => viewForBox(...(portrait() ? b.tall : b.wide), b.dir);
-const dotsNav = document.querySelector(".dots");
+const frame = (wide, tall, dir) => () => viewForBox(...(portrait() ? tall : wide), dir);
+const world = (path) => (path === "expand" ? officeBox.clone().union(annexBox) : officeBox.clone());
+
+// Scene state per path and step. Anything left out is "off".
+// line / annexLine: how far each red line has travelled; base: how lit the office already is;
+// grey: the three other-provider lines (phones, internet, customer lines).
+const T = {
+  team:     frame([box(0.6, 0, 0.6, 3.5, 1.8, 2.8), 1.3],    [box(0.8, 0.2, 0.8, 3.3, 1.8, 2.6), 1.12]),
+  entry:    frame([box(0.6, 0, 0.4, 5.3, 1.8, 3.3), 1.12],   [box(0.6, 0, 0.5, 4.6, 1.8, 3.2), 1.04]),
+  desks:    frame([box(-1.1, 0, -4.0, 3.9, 2.2, 0.4), 1.08], [box(-0.8, 0, -4.0, 3.7, 2.1, -0.3), 1.0]),
+  front:    frame([box(-4.4, 0, -1.3, 1.3, 1.2, 2.3), 1.08], [box(-4.4, 0, -1.0, 0.9, 1.3, 2.1), 1.1]),
+  office:   () => viewForBox(officeBox, portrait() ? 0.98 : 1.05),
+  // Expand
+  arrivals: frame([box(-1.2, 0, -4.2, 5.4, 2.4, 3.8), 1.04],  [box(0.2, 0, -1.0, 5.0, 2.0, 3.8), 1.04]),
+  joiners:  frame([box(2.6, 0, 1.6, 5.0, 1.9, 4.0), 1.3],     [box(2.8, 0.2, 2.0, 4.8, 1.9, 3.9), 1.15]),
+  grow:     frame([box(-1.1, 0, -4.0, 3.9, 2.2, 2.4), 1.06],  [box(-0.8, 0, -3.0, 3.4, 2.0, 2.4), 1.02]),
+  site:     frame([box(1.5, 0, -2.6, 10.9, 2.4, 3.4), 1.04],  [box(4.2, 0, -1.2, 10.9, 2.2, 3.0), 1.0]),
+  wide:     () => viewForBox(world("expand"), portrait() ? 0.98 : 1.04),
+  // Switch
+  tangled:  () => viewForBox(officeBox.clone().union(box(5, -0.3, -1.5, 6.6, 0, 3.9)), portrait() ? 0.98 : 1.04),
+  numbers:  frame([box(-1.0, 0, -3.4, 5.6, 1.9, 3.3), 1.05],  [box(-0.6, 0, -3.2, 4.4, 1.9, 3.0), 1.0]),
+};
+
+const STEPS = {
+  setup: [
+    { frame: T.team },
+    { frame: T.entry,  line: () => line.marks.Meera },
+    { frame: T.desks,  line: () => line.marks.deskD },
+    { frame: T.front,  line: () => line.marks.frontDesk },
+    { frame: T.office, line: () => 1 },
+  ],
+  expand: [
+    { frame: T.arrivals, line: () => 1, base: 1 },
+    { frame: T.joiners,  line: () => 1, base: 1, hires: 1 },
+    { frame: T.grow,     line: () => 1, base: 1, hires: 1, extra: 1 },
+    { frame: T.site,     line: () => 1, base: 1, hires: 1, extra: 1, annex: 1, annexLine: 1 },
+    { frame: T.wide,     line: () => 1, base: 1, hires: 1, extra: 1, annex: 1, annexLine: 1 },
+  ],
+  shift: [
+    { frame: T.tangled, base: 0.5, grey: [1, 1, 1] },
+    { frame: T.numbers, base: 0.5, grey: [0, 1, 1], line: () => line.marks.Meera },
+    { frame: T.desks,   base: 0.5, grey: [0, 0, 1], line: () => line.marks.deskD },
+    { frame: T.front,   base: 0.5, grey: [0, 0, 0], line: () => line.marks.frontDesk },
+    { frame: T.office,  base: 0.5, grey: [0, 0, 0], line: () => 1 },
+  ],
+};
+
+function stateFor(path, step) {
+  if (step === 0) return { frame: () => viewForBox(officeBox, portrait() ? 0.98 : 1.04) };
+  if (step === LAST) {
+    const s = STEPS[path][4];
+    return { ...s, frame: () => viewForBox(world(path), portrait() ? 1.04 : 1.16, RISE) };
+  }
+  return STEPS[path][step - 1];
+}
 
 let current = -1;
+let shownPath = null;
 let ctrl = null;
 
-function showCopy(i) {
-  copies.forEach((c, j) => c.classList.toggle("is-active", j === i));
+function showCopy(step) {
+  document.querySelectorAll(".copy").forEach((c) => c.classList.toggle("is-active", +c.dataset.step === step));
 }
-function setDots(i) {
-  dotsNav.classList.toggle("is-hidden", i >= dots.length);
+function setDots(step) {
+  dotsNav.classList.toggle("is-hidden", step < 1 || step > 5);
   dots.forEach((d, j) => {
-    d.classList.toggle("is-active", j === i);
-    if (j === i) d.setAttribute("aria-current", "step"); else d.removeAttribute("aria-current");
+    d.classList.toggle("is-active", j === step - 1);
+    if (j === step - 1) d.setAttribute("aria-current", "step"); else d.removeAttribute("aria-current");
   });
 }
 
@@ -54,7 +102,6 @@ function glide(to, duration, signal) {
     applyView();
   }, { signal });
 }
-
 function setView(v) {
   view.target.copy(v.target);
   view.size = v.size;
@@ -62,77 +109,109 @@ function setView(v) {
   applyView();
 }
 
-export async function goTo(i) {
-  if (i === current) return;
-  if (!renderer) { current = i; setDots(i); showCopy(i); return; }
-  const prev = current;
-  current = i;
+// Put the whole scene into a state at once (jumps, path switches, reduced motion)
+async function applyInstant(path, step, s) {
+  setView(s.frame());
+  setBaseline(s.base ?? 0, { instant: true });
+  line.set(s.line?.() ?? 0);
+  annexLine.set(s.annexLine ?? 0);
+  snapLights();
+  await Promise.all([
+    setAnnex(s.annex ?? 0, { instant: true }),
+    setExtraDesks(s.extra ?? 0, { instant: true }),
+    setGrey(s.grey ?? [0, 0, 0], { instant: true }),
+    setHiresPhones(s.hires ?? 0, { instant: true }),
+    posePeople(path, step, { instant: true }),
+  ]);
+}
+
+export async function goTo(step, { force = false } = {}) {
+  const path = site.path;
+  if (step === current && path === shownPath && !force) return;
+  const prev = current, prevPath = shownPath;
+  current = step;
+  shownPath = path;
+  setDots(step);
+  if (!renderer) { showCopy(step); return; }
   ctrl?.abort();
   ctrl = new AbortController();
   const { signal } = ctrl;
-  const beat = BEATS[i];
-  setDots(i);
-  if (prev !== -1) showCopy(-1);   // beat 1's words are already on screen at load
+  const s = stateFor(path, step);
+  if (prev !== -1) showCopy(-1);   // the opening words are already on screen at load
 
-  if (reduceMotion.matches || prev === -1) {
-    // End state, revealed with a fade
-    if (prev !== -1) { container.classList.add("is-fading"); await wait(0.35, signal); if (signal.aborted) return; }
-    setView(beat.frame());
-    line.set(beat.line());
-    snapLights();
-    await poseBeat(i, { instant: true });
+  const sequential = step === prev + 1 && (path === prevPath || prev === 0) && !(prev === 0 && path !== "setup");
+  if (reduceMotion.matches || prev === -1 || (!sequential && path !== prevPath)) {
+    // Fade to the new state (path switch, first load, reduced motion)
+    if (prev !== -1) { container.classList.add("is-fading"); if (!(await wait(0.35, signal))) return; }
+    await applyInstant(path, step, s);
     container.classList.remove("is-fading");
-    showCopy(i);
+    if (!signal.aborted) showCopy(step);
     return;
   }
 
-  if (i === prev + 1) {
+  const opts = { signal };
+  if (sequential) {
     // One thing at a time
-    if (!(await glide(beat.frame(), i === BEATS.length - 1 ? 1.5 : 1.2, signal))) return;
-    if (!(await line.growTo(beat.line(), { duration: 1.4, signal }))) return;
-    if (!(await wait(0.1, signal))) return;
-    if (!(await poseBeat(i, { duration: 1.2, signal }))) return;
-  } else {
-    // A jump: everything settles together, once
-    const results = await Promise.all([
-      glide(beat.frame(), 1.4, signal),
-      line.growTo(beat.line(), { duration: 1.4, signal }),
-      poseBeat(i, { duration: 1.2, signal }),
+    if (!(await glide(s.frame(), step === LAST ? 1.5 : 1.2, signal))) return;
+    setBaseline(s.base ?? 0);
+    if (!(await setAnnex(s.annex ?? 0, opts))) return;
+    if (!(await setHiresPhones(s.hires ?? 0, opts))) return;
+    const lineDone = await Promise.all([
+      line.growTo(s.line?.() ?? 0, { duration: 1.4, signal }),
+      setGrey(s.grey ?? [0, 0, 0], opts),                 // other providers fade as Airtel arrives
     ]);
-    if (results.includes(false)) return;
+    if (lineDone.includes(false) || lineDone[1].includes?.(false)) return;
+    if (!(await annexLine.growTo(s.annexLine ?? 0, { duration: (s.annexLine ?? 0) > 0 ? 1.4 : 0, signal }))) return;
+    if (!(await setExtraDesks(s.extra ?? 0, opts))) return;
+    if (!(await wait(0.1, signal))) return;
+    if (!(await posePeople(path, step, { duration: 1.2, signal }))) return;
+  } else {
+    // A jump within the same path: everything settles together, once
+    setBaseline(s.base ?? 0);
+    const results = await Promise.all([
+      glide(s.frame(), 1.4, signal),
+      line.growTo(s.line?.() ?? 0, { duration: 1.4, signal }),
+      annexLine.growTo(s.annexLine ?? 0, { duration: 1.4, signal }),
+      setAnnex(s.annex ?? 0, opts),
+      setExtraDesks(s.extra ?? 0, opts),
+      setGrey(s.grey ?? [0, 0, 0], opts),
+      setHiresPhones(s.hires ?? 0, opts),
+      posePeople(path, step, { duration: 1.2, signal }),
+    ]);
+    if (results.flat().includes(false)) return;
   }
-  if (!signal.aborted) showCopy(i);
+  if (!signal.aborted) showCopy(step);
 }
 
-/* ---------- Scroll, dots and keys pick the beat ---------- */
+/* ---------- Scroll, dots, keys and path changes pick the step ---------- */
 const io = new IntersectionObserver((entries) => {
-  for (const e of entries) if (e.isIntersecting) goTo(+e.target.dataset.beat);
+  for (const e of entries) if (e.isIntersecting) goTo(+e.target.dataset.step);
 }, { rootMargin: "-50% 0px -50% 0px" });
 beatEls.forEach((el) => io.observe(el));
 
 dots.forEach((d, j) => d.addEventListener("click", () => {
-  beatEls[j].scrollIntoView({ behavior: reduceMotion.matches ? "auto" : "smooth" });
+  beatEls[j + 1].scrollIntoView({ behavior: reduceMotion.matches ? "auto" : "smooth" });
 }));
 
-// Arrow and Page keys step exactly one beat while in the story
+site.onChange(() => { if (current >= 1) goTo(current, { force: true }); });
+
 const story = document.querySelector(".story");
 window.addEventListener("keydown", (e) => {
   if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
-  if (e.target.closest?.("input, textarea, select, [contenteditable]")) return;
+  if (e.target.closest?.("input, textarea, select, [contenteditable], .menu, .mobile-menu")) return;
   const dir = { ArrowDown: 1, PageDown: 1, ArrowUp: -1, PageUp: -1 }[e.key];
   if (!dir) return;
   const rect = story.getBoundingClientRect();
-  if (rect.bottom <= 1 || rect.top >= window.innerHeight - 1) return; // not in the story
+  if (rect.bottom <= 1 || rect.top >= window.innerHeight - 1) return;
   const next = current + dir;
   if (next < 0) return;
   e.preventDefault();
-  const target = next < beatEls.length ? beatEls[next] : document.querySelector(".ending");
+  const target = next <= LAST ? beatEls[next] : document.querySelector(".ending");
   target?.scrollIntoView({ behavior: reduceMotion.matches ? "auto" : "smooth" });
 });
 
-// Keep framing right when the screen size or orientation changes
 container.addEventListener("resize-scene", () => {
-  if (current >= 0 && !ctrl?.signal.aborted) setView(BEATS[current].frame());
+  if (current >= 0 && !ctrl?.signal.aborted) setView(stateFor(shownPath, current).frame());
 });
 
 goTo(0);

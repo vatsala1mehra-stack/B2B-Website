@@ -14,16 +14,17 @@ map in `office.html`. Runs as-is on GitHub Pages.
 
 | File | What it is | Who edits it |
 | --- | --- | --- |
-| `config.js` | **The single place to change content**: checkout URL, advisor link, lead endpoint, guide URL, the product catalogue (name, category, SKU, price) and `officeBundle` (the plan shown at the end). | Business team |
+| `config.js` | **The single place to change content**: links, the three stories (`paths`: copy for every beat, "You get" products, the plan per path), the credibility block (`proof`, all placeholders until verified) and the product catalogue (name, category, SKU, price). | Business team |
 | `office.html` | The page: nav with the **BRAND SLOT**, the five beats' headlines (real HTML text), progress dots and the ending section. | Web / marketing |
 | `index.html` | Redirects the site root to `office.html`. | — |
 | `styles.css` | All styling. Colours, font and spacing are CSS variables at the top. Mobile-first: scene top 60%, words bottom 40%. | Web |
-| `main.js` | Fills links, the ending spec list, price and Buy online URL from `config.js`. Also runs a simple fallback story if 3D can't load. | Web |
+| `main.js` | Renders everything from `config.js`: nav menus, the story copy for the chosen path, the plan and Buy online URL, the "Why Airtel" proof and footer. Owns the chosen path. Runs a simple fallback story if 3D can't load. | Web |
 | `office.js` | The clay office: materials, furniture, layout, renderer (studio light, bloom, tone-matched background), camera, cursor parallax and the render loop (paused off screen / in hidden tabs). | Web |
 | `line.js` | The red line: one path through named waypoints, `growTo(t)` with smooth easing, and a faint pulse. | Web |
 | `lighting.js` | The light-up system: each area warms over ~1.4s when the line reaches it; the whole room warms with progress. | Web |
 | `people.js` | The four figurines (Riya, Arjun, Meera, Kabir) and their poses for each beat. | Web |
-| `story.js` | The five beats: scroll / dots / arrow keys pick a beat; camera glide → line → posture → words. | Web |
+| `story.js` | "What's your move?" → five beats for the chosen path (set up / expand / switch) → ending. Scroll, dots or arrow keys pick a step; camera glide → scene change → posture → words. | Web |
+| `expansion.js` | Scene pieces for the other paths: extra desks, the second-site annex and its line, the grey other-provider lines. | Web |
 | `leaves.js` | Clay trees outside the office and a few drifting leaves (approved exception in `CLAUDE.md`). | Web |
 | `anim.js` | Tiny tween helper and the site's one easing curve. | Web |
 | `assets/office-poster.jpg` | Static image of the finished office, shown if WebGL or Three.js is unavailable. | — |
@@ -31,15 +32,15 @@ map in `office.html`. Runs as-is on GitHub Pages.
 
 ## Editing `config.js`
 
-- **checkoutUrl**: where Buy online goes. The ending's button adds
-  `?plan=New office&items=SKU1,SKU2,…&utm_source=office_story`.
-- **advisorUrl**: where "Talk to an advisor" goes (a contact page or `tel:` link). Empty uses `checkoutUrl`.
-- **leadEndpoint**, **guideUrl**: kept for later; not used on the page right now.
-- **products**: `name`, `category`, `sku`, `price` (INR per month or `null`). SKUs are placeholders (`SKU-TBD-…`).
-- **officeBundle**: `plan`, `price` (`null` shows "Price shown at checkout") and `lines`. Each line has an
-  `area`, the `label` shown, and `products` — exact names from the catalogue, whose SKUs go to checkout.
+- **paths.setup / expand / shift**: `label` (the choice button), `beats` (exactly five: `title` of 5 words or fewer, one-sentence `text`, `get` = catalogue product names shown as "You get"), and `plan` (`name`, `price`, `lines`). The 3D scene for each beat is fixed in `story.js`.
+- **proof**: stats, client logo slots, quote, certifications. **Everything is a placeholder**; values in [brackets] show as grey placeholders until Airtel supplies verified facts.
+- **products**: `name`, `category`, `sku`, `price` (INR per month or `null`). SKUs are placeholders (`SKU-TBD-…`). A number shows as "from ₹X/mo" in "You get" lines.
+- **checkoutUrl**: Buy online adds `?plan=…&items=SKU1,SKU2&utm_source=office_story&utm_content=<path>`.
+- **advisorUrl**, **links**: Talk to sales, Support, Privacy and Terms.
 
 Keep the commas and quotes; a syntax error stops the page loading. Open the page after editing.
+
+Deep links: `office.html#setup`, `#expand` or `#shift` open with that path chosen.
 
 ## Brand
 

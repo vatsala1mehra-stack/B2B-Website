@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Airtel Business — Your office, taken care of</title>
-  <meta name="description" content="Phones, internet, customers and security for your new office — one partner, one bill.">
+  <title>Airtel Business: set up, expand or switch your office</title>
+  <meta name="description" content="See what changes in your office before you talk to anyone: phones, internet, customer lines and security from one partner, on one bill.">
   <meta name="theme-color" content="#d3d4d7">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Manrope is a stand-in for the official brand typeface (see --font-sans in styles.css). -->
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script type="importmap">
     {
@@ -21,9 +21,10 @@
   </script>
 </head>
 <body>
-  <a class="skip-link" href="#ending-title">Skip to plan and price</a>
+  <a class="skip-link" href="#plan">Skip to plan and price</a>
+
   <header class="nav">
-    <a class="brand" href="./" aria-label="Airtel Business — home">
+    <a class="brand" href="./" aria-label="Airtel Business: home">
       <!--
         ===================== BRAND SLOT =====================
         Place the official Airtel Business logo file here, e.g.:
@@ -34,57 +35,133 @@
       -->
       <span class="brand-text">Airtel Business</span>
     </a>
-    <a class="nav-buy js-checkout" href="https://www.airtel.in/business/">Buy online</a>
+
+    <nav class="menu" aria-label="Main">
+      <div class="menu-item">
+        <button class="menu-trigger" type="button" aria-expanded="false" aria-controls="menu-solutions">Solutions</button>
+        <div class="menu-panel" id="menu-solutions">
+          <a href="#move" data-path="setup"><strong>Set up a new office</strong><span>Phones, internet, customer lines, security</span></a>
+          <a href="#move" data-path="expand"><strong>Expand your office</strong><span>New joiners, more bandwidth, a second site</span></a>
+          <a href="#move" data-path="shift"><strong>Switch to Airtel</strong><span>Keep your numbers, one bill</span></a>
+        </div>
+      </div>
+      <div class="menu-item">
+        <button class="menu-trigger" type="button" aria-expanded="false" aria-controls="menu-products">Products</button>
+        <div class="menu-panel menu-products" id="menu-products"></div>
+      </div>
+      <a class="menu-link" href="#why">Why Airtel</a>
+      <a class="menu-link js-support" href="https://www.airtel.in/business/">Support</a>
+    </nav>
+
+    <div class="nav-actions">
+      <a class="nav-sales js-advisor" href="https://www.airtel.in/business/">Talk to sales</a>
+      <a class="nav-buy js-checkout" href="https://www.airtel.in/business/">Buy online</a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu"><span></span><span></span></button>
+    </div>
   </header>
 
-  <main>
-    <h1 class="sr-only">Airtel Business: your office, taken care of</h1>
+  <div class="mobile-menu" id="mobile-menu" hidden>
+    <p class="mobile-heading">Solutions</p>
+    <a href="#move" data-path="setup">Set up a new office</a>
+    <a href="#move" data-path="expand">Expand your office</a>
+    <a href="#move" data-path="shift">Switch to Airtel</a>
+    <p class="mobile-heading">Explore</p>
+    <a href="#plan">Products and plan</a>
+    <a href="#why">Why Airtel</a>
+    <a class="js-support" href="https://www.airtel.in/business/">Support</a>
+    <a class="js-advisor" href="https://www.airtel.in/business/">Talk to sales</a>
+  </div>
 
-    <section class="story" aria-label="The story of a new office">
+  <main>
+    <h1 class="sr-only">Airtel Business: set up, expand or switch your office</h1>
+
+    <section class="story" id="move" aria-label="Your office, step by step">
       <div class="stage">
+        <canvas class="stage-canvas" aria-hidden="true"></canvas>
         <div class="scene" aria-hidden="true">
-          <canvas class="stage-canvas"></canvas>
-          <img class="poster" src="assets/office-poster.jpg" alt="" width="899" height="694" loading="lazy" decoding="async">
+          <img class="poster" src="assets/office-poster.jpg" alt="" width="1200" height="612" loading="lazy" decoding="async">
         </div>
         <div class="copies">
-          <div class="copy is-active"><h2>Monday. Nothing works yet.</h2><p>No phones, no internet, no way in for customers.</p></div>
-          <div class="copy"><h2>Everyone, reachable.</h2><p>One plan puts every phone on Airtel from day one.</p></div>
-          <div class="copy"><h2>Online. And staying that way.</h2><p>One line brings fast, steady internet to every desk.</p></div>
-          <div class="copy"><h2>Open for customers.</h2><p>One number rings at the front desk, wherever you are.</p></div>
-          <div class="copy"><h2>Safe. Simple. One partner.</h2><p>Security around it all, on one bill.</p></div>
+          <div class="copy copy-intro is-active" data-step="0">
+            <h2>What's your move?</h2>
+            <p>Pick one and watch your office change, before you talk to anyone.</p>
+            <div class="moves" role="group" aria-label="Choose your move">
+              <button type="button" class="move" data-path="setup">Set up a new office</button>
+              <button type="button" class="move" data-path="expand">Expand my office</button>
+              <button type="button" class="move" data-path="shift">Switch to Airtel</button>
+            </div>
+          </div>
+          <!-- Beats 1-5 for the chosen path are written in from config.js (main.js) -->
         </div>
       </div>
       <div class="beats" aria-hidden="true">
-        <div class="beat" data-beat="0"></div>
-        <div class="beat" data-beat="1"></div>
-        <div class="beat" data-beat="2"></div>
-        <div class="beat" data-beat="3"></div>
-        <div class="beat" data-beat="4"></div>
-        <div class="beat" data-beat="5"></div>
+        <div class="beat" data-step="0"></div>
+        <div class="beat" data-step="1"></div>
+        <div class="beat" data-step="2"></div>
+        <div class="beat" data-step="3"></div>
+        <div class="beat" data-step="4"></div>
+        <div class="beat" data-step="5"></div>
+        <div class="beat" data-step="6"></div>
       </div>
     </section>
 
-    <nav class="dots" aria-label="Story progress">
-      <button type="button" aria-label="Beat 1: Monday. Nothing works yet."><span></span></button>
-      <button type="button" aria-label="Beat 2: Everyone, reachable."><span></span></button>
-      <button type="button" aria-label="Beat 3: Online. And staying that way."><span></span></button>
-      <button type="button" aria-label="Beat 4: Open for customers."><span></span></button>
-      <button type="button" aria-label="Beat 5: Safe. Simple. One partner."><span></span></button>
+    <nav class="dots is-hidden" aria-label="Story progress">
+      <button type="button"><span></span></button>
+      <button type="button"><span></span></button>
+      <button type="button"><span></span></button>
+      <button type="button"><span></span></button>
+      <button type="button"><span></span></button>
     </nav>
 
-    <section class="ending" aria-labelledby="ending-title">
+    <section class="ending" id="plan" aria-labelledby="ending-title">
       <div class="ending-inner">
+        <p class="eyebrow js-plan-name">Your plan</p>
         <h2 id="ending-title" tabindex="-1">Your office. Taken care of.</h2>
         <dl class="specs"></dl>
         <p class="price">Price shown at checkout</p>
         <div class="ending-actions">
           <a class="btn-buy js-buy" href="https://www.airtel.in/business/">Buy online</a>
-          <a class="advisor js-advisor" href="https://www.airtel.in/business/">Talk to an advisor</a>
+          <a class="advisor js-advisor" href="https://www.airtel.in/business/">Talk to sales</a>
         </div>
+        <p class="switch-path">Not your move? <span class="js-other-paths"></span></p>
       </div>
-      <p class="fine-print">Products and prices are confirmed at checkout.</p>
     </section>
 
+    <section class="why" id="why" aria-labelledby="why-title">
+      <div class="why-inner">
+        <h2 id="why-title" class="js-proof-headline">Why businesses run on Airtel</h2>
+        <ul class="stats js-stats"></ul>
+        <div class="logos js-logos" aria-label="Customers"></div>
+        <figure class="quote js-quote"></figure>
+        <ul class="badges js-badges"></ul>
+      </div>
+
+      <footer class="footer">
+        <div class="footer-cols">
+          <div>
+            <p class="footer-heading">Solutions</p>
+            <a href="#move" data-path="setup">Set up a new office</a>
+            <a href="#move" data-path="expand">Expand your office</a>
+            <a href="#move" data-path="shift">Switch to Airtel</a>
+          </div>
+          <div>
+            <p class="footer-heading">Products</p>
+            <div class="js-footer-products"></div>
+          </div>
+          <div>
+            <p class="footer-heading">Help</p>
+            <a class="js-support" href="https://www.airtel.in/business/">Support</a>
+            <a class="js-advisor" href="https://www.airtel.in/business/">Talk to sales</a>
+          </div>
+        </div>
+        <div class="footer-legal">
+          <span>Airtel Business</span>
+          <a class="js-privacy" href="https://www.airtel.in/business/">Privacy</a>
+          <a class="js-terms" href="https://www.airtel.in/business/">Terms</a>
+          <span>Products and prices are confirmed at checkout.</span>
+        </div>
+      </footer>
+    </section>
   </main>
 
   <script type="module" src="main.js"></script>

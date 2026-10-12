@@ -25,6 +25,7 @@ const P = {
   typing: (seat) => ({ x: seat.x, z: seat.z, yaw: Math.PI, seated: true, lean: 0.1, head: [0.28, 0], armR: ARM.type, armL: ARM.type, phone: "none" }),
   relaxedChair: (seat, headYaw = 0.25) => ({ x: seat.x, z: seat.z, yaw: Math.PI, seated: true, lean: -0.24, head: [-0.08, headYaw], armR: ARM.lap, armL: ARM.lap, phone: "none" }),
   call: (seat) => ({ x: seat.x, z: seat.z, yaw: Math.PI / 2, seated: true, lean: 0.02, head: [0.05, 0.25], armR: ARM.ear, armL: ARM.rest, phone: "ear" }),
+  deskPhone: (seat) => ({ x: seat.x, z: seat.z, yaw: Math.PI, seated: true, lean: 0.06, head: [0.5, 0], armR: ARM.hold, armL: ARM.hold, phone: "hold" }),
   frontDesk: (seat) => ({ x: seat.x, z: seat.z, yaw: Math.PI / 2, seated: true, lean: -0.1, head: [0.0, -0.2], armR: ARM.rest, armL: ARM.rest, phone: "none" }),
   sofa: (seat, headYaw) => ({ x: seat.x, z: seat.z, yaw: Math.PI / 2, seated: true, lean: -0.3, head: [-0.06, headYaw], armR: ARM.lap, armL: ARM.lap, phone: "none" }),
 };
@@ -124,6 +125,9 @@ const cast = [
   ["Arjun", { skin: SKIN[0], top: CLOTH.slate, bottom: CLOTH.umber, hair: "short" }],
   ["Meera", { skin: SKIN[1], top: CLOTH.mauve, bottom: CLOTH.denim, hair: "bun" }],
   ["Kabir", { skin: SKIN[3], top: CLOTH.sand,  bottom: CLOTH.stone, hair: "short" }],
+  // New joiners in the "Expand" story
+  ["Isha",  { skin: SKIN[0], top: CLOTH.stone, bottom: CLOTH.ink,   hair: "long" }],
+  ["Dev",   { skin: SKIN[2], top: CLOTH.denim, bottom: CLOTH.umber, hair: "short" }],
 ];
 
 // Where everyone stands at the start (also used for light pools under them)
@@ -131,46 +135,87 @@ export const SPOTS = {
   Riya: [2.05, 1.05, 0.35], Arjun: [1.1, 1.55, 0.95], Meera: [2.95, 1.6, -0.25], Kabir: [2.0, 2.35, 0.6],
 };
 
-// Poses per beat (index 0..4). Only people whose pose changes will fade.
-export function posesForBeat(beat) {
+// Poses for each path and step. Steps: 0 = the opening question, 1-5 = the
+// beats, 6 = the ending (same as beat 5). null = not in the scene.
+export function posesFor(path, step) {
   const desk = (id) => parts[id].seat;
   const sofa = parts.sofa.seats;
   const fd = parts.frontDesk.seat;
   const s = SPOTS;
-  const all = [
-    { Riya: P.unsure(...s.Riya, 0.5), Arjun: P.unsure(...s.Arjun, -0.4), Meera: P.unsure(...s.Meera, -0.6), Kabir: P.unsure(...s.Kabir, -0.7) },
-    { Riya: P.looking(...s.Riya), Arjun: P.looking(...s.Arjun), Meera: P.looking(...s.Meera), Kabir: P.looking(...s.Kabir) },
-    { Riya: P.typing(desk("deskC")), Arjun: P.typing(desk("deskA")), Meera: P.typing(desk("deskB")), Kabir: P.typing(desk("deskD")) },
-    { Riya: P.relaxedChair(desk("deskC")), Arjun: P.typing(desk("deskA")), Meera: P.typing(desk("deskB")), Kabir: P.call(fd) },
-    { Riya: P.relaxedChair(desk("deskC")), Arjun: P.sofa(sofa[1], -0.5), Meera: P.sofa(sofa[0], 0.5), Kabir: P.frontDesk(fd) },
-  ];
-  return all[Math.min(beat, all.length - 1)];
+  const b = Math.max(1, Math.min(step, 5));
+  const working = { Riya: P.typing(desk("deskC")), Arjun: P.typing(desk("deskA")), Meera: P.typing(desk("deskB")), Kabir: P.typing(desk("deskD")) };
+  const ending = { Riya: P.relaxedChair(desk("deskC")), Arjun: P.sofa(sofa[1], -0.5), Meera: P.sofa(sofa[0], 0.5), Kabir: P.frontDesk(fd) };
+  const none = { Isha: null, Dev: null };
+
+  if (path === "expand" && step > 0) {
+    const door = { Isha: [4.3, 2.85, -2.25], Dev: [3.7, 3.45, -2.55] };
+    return [
+      null,
+      { ...working, Isha: P.unsure(...door.Isha, 0.3), Dev: P.unsure(...door.Dev, -0.3) },
+      { ...working, Isha: P.looking(...door.Isha), Dev: P.looking(...door.Dev) },
+      { ...working, Isha: P.typing(desk("deskE")), Dev: P.typing(desk("deskF")) },
+      { ...working, Kabir: P.typing(desk("annexA")), Isha: P.typing(desk("deskE")), Dev: P.typing(desk("annexB")) },
+      { ...ending, Kabir: P.typing(desk("annexA")), Isha: P.typing(desk("deskE")), Dev: P.relaxedChair(desk("annexB")) },
+    ][b];
+  }
+  if (path === "shift" && step > 0) {
+    return [
+      null,
+      { ...working, Riya: P.looking(1.0, 0.0, Math.PI * 0.85), ...none },
+      { Riya: P.deskPhone(desk("deskC")), Arjun: P.deskPhone(desk("deskA")), Meera: P.deskPhone(desk("deskB")), Kabir: P.deskPhone(desk("deskD")), ...none },
+      { ...working, ...none },
+      { ...working, Riya: P.relaxedChair(desk("deskC")), Kabir: P.call(fd), ...none },
+      { ...ending, ...none },
+    ][b];
+  }
+  // Set up (and the opening question)
+  return [
+    { Riya: P.unsure(...s.Riya, 0.5), Arjun: P.unsure(...s.Arjun, -0.4), Meera: P.unsure(...s.Meera, -0.6), Kabir: P.unsure(...s.Kabir, -0.7), ...none },
+    { Riya: P.looking(...s.Riya), Arjun: P.looking(...s.Arjun), Meera: P.looking(...s.Meera), Kabir: P.looking(...s.Kabir), ...none },
+    { ...working, ...none },
+    { ...working, Riya: P.relaxedChair(desk("deskC")), Kabir: P.call(fd), ...none },
+    { ...ending, ...none },
+  ][b - 1];
 }
+
+const same = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
 
 if (renderer) {
   for (const [name, look] of cast) figure(name, look);
-  const start = posesForBeat(0);
-  for (const name in people) applyPose(people[name], start[name]);
+  const start = posesFor("setup", 0);
+  for (const name in people) {
+    if (start[name]) applyPose(people[name], start[name]);
+    else { people[name].pose = null; people[name].root.visible = false; setOpacity(people[name], 0); }
+  }
   requestRender({ shadows: true });
 }
 
-// Move everyone to a beat's poses. Changed figures fade out, re-pose, fade in.
-export async function poseBeat(beat, { duration = 1.2, signal, instant = false } = {}) {
-  const target = posesForBeat(beat);
-  const changing = Object.values(people).filter((p) => p.pose !== target[p.name] && JSON.stringify(p.pose) !== JSON.stringify(target[p.name]));
+// Move everyone to a step's poses. Changed figures fade out, re-pose, fade in;
+// people leaving the scene fade out, people joining fade in.
+export async function posePeople(path, step, { duration = 1.2, signal, instant = false } = {}) {
+  const target = posesFor(path, step);
+  const changing = Object.values(people).filter((p) => !same(p.pose, target[p.name] ?? null));
   if (!changing.length) return true;
-  if (instant) {
-    for (const p of changing) { applyPose(p, target[p.name]); setOpacity(p, 1); }
+  const finish = () => {
+    for (const p of changing) {
+      const t = target[p.name] ?? null;
+      if (t) { applyPose(p, t); p.root.visible = true; setOpacity(p, 1); }
+      else { p.pose = null; p.root.visible = false; setOpacity(p, 0); }
+    }
     requestRender({ shadows: true });
-    return true;
-  }
-  const from = changing.map((p) => p.mats.skin.opacity);
+  };
+  if (instant) { finish(); return true; }
+  const from = changing.map((p) => (p.root.visible ? p.mats.skin.opacity : 0));
   const out = await tween(duration / 2, (k) => changing.forEach((p, i) => setOpacity(p, from[i] * (1 - k))), { signal });
-  for (const p of changing) applyPose(p, target[p.name]);
+  if (!out) { finish(); return false; }
+  for (const p of changing) {
+    const t = target[p.name] ?? null;
+    if (t) { applyPose(p, t); p.root.visible = true; } else { p.pose = null; p.root.visible = false; }
+  }
   requestRender({ shadows: true });
-  if (!out) { changing.forEach((p) => setOpacity(p, 1)); requestRender({ shadows: true }); return false; }
-  const ok = await tween(duration / 2, (k) => changing.forEach((p) => setOpacity(p, k)), { signal });
-  if (!ok) changing.forEach((p) => setOpacity(p, 1));
+  const joining = changing.filter((p) => p.pose);
+  const ok = await tween(duration / 2, (k) => joining.forEach((p) => setOpacity(p, k)), { signal });
+  if (!ok) finish();
   requestRender({ shadows: true });
   return ok;
 }

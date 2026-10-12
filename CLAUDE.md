@@ -4,18 +4,32 @@ This is the design brief every future change must follow. If a change conflicts 
 
 ## Concept
 
-- **"Your office. Taken care of."** A dim, empty office comes to life as a single red line (Airtel) runs through it, connecting the team, the internet, customers and security. One continuous line = one partner.
-- **Light tells the story:** the office starts grey and dim; wherever the red line arrives, that area warms and lights up. At the end the office is fully lit.
+- **"Your office. Taken care of."** A clay office comes to life as a single red line (Airtel) runs through it, connecting the team, the internet, customers and security. One continuous line = one partner.
+- **Experience the service, don't hear a pitch.** A visitor sees exactly what changes in their office, what they would buy, and why to trust Airtel, before talking to anyone.
+- **Light tells the story:** wherever the red line arrives, that area warms and lights up.
 
-## Story: 5 beats, then an ending
+## Story: choose a move, then 5 beats, then the plan
 
-1. **"Monday. Nothing works yet."** Four people in a dim, quiet office.
-2. **"Everyone, reachable."** The line reaches their phones; faces and screens light up.
-3. **"Online. And staying that way."** The line reaches the router; desks and laptops glow.
-4. **"Open for customers."** The front desk lights up; a call comes in.
-5. **"Safe. Simple. One partner."** The line closes a loop around the office; fully lit.
+The visitor starts with one question, **"What's your move?"**, and three choices. Each choice is its own five-beat story in the same clay world; the visitor can switch path at any time.
 
-**End: "Your office. Taken care of."** Camera pulls back, then buy online.
+1. **Set up a new office**: an empty, dim office comes to life (phones → internet → customers → security).
+2. **Expand my office**: a lit office for four grows: new joiners, new desks, a leased line, a second site joining the same network.
+3. **Switch to Airtel**: a working office tangled in grey lines from several providers; the red line replaces them one by one.
+
+**End: "Your office. Taken care of."** The camera rises over the fully lit office, then the path's plan (from `config.js`) with Buy online.
+
+All story copy lives in `config.js` (`paths`), so the business team can edit it.
+
+## Copy rules
+
+- **Concrete, never vague:** each beat names a real problem or outcome a founder recognises ("Three providers. Three bills."), not a mood.
+- Headlines of 5 words or fewer; one sentence that says *how*, in plain words.
+- **"You get"**: one quiet line under the sentence naming the products that make it happen (catalogue names from `config.js`). This is the only place product names appear during the story.
+- **No invented facts.** Stats, customers, quotes, certifications and time or uptime promises come only from Airtel. Until then they are visible [placeholders] in `config.js`.
+
+## Credibility
+
+- A **"Why Airtel"** section after the plan: key stats, client logo slots, one customer quote, certifications/SLA. All values come from `config.js` (`proof`).
 
 ## Visual rules
 
@@ -41,10 +55,10 @@ This is the design brief every future change must follow. If a change conflicts 
 
 ## Type & UI rules
 
-- Headlines of 5 words or fewer; one short supporting sentence. No jargon until the final screen.
 - One large centred headline per beat, lots of space. No cards, chips or checklists during the story.
 - Progress: 5 small dots at the edge; the active dot is red.
-- "Buy online" appears quietly in the nav, and as one confident call to action at the end.
+- **Navigation like a real B2B site:** brand slot, Solutions (the three paths), Products (the catalogue), Why Airtel, Support, "Talk to sales", and "Buy online" (quiet in the nav, one confident call to action at the end). Phones get a menu button.
+- The words sit directly on the scene: no panels, bands, fades or overlays behind them. Each beat frames its important area away from the text.
 
 ## Mobile first
 

@@ -31,7 +31,7 @@ function rr(ctx, x, y, w, h, r, fill) {
 }
 
 // A calm, simple workspace app: sidebar, title, three cards, one gentle chart.
-const laptopUI = canvasTexture(512, 336, (ctx, w, h) => {
+export const laptopUI = canvasTexture(512, 336, (ctx, w, h) => {
   rr(ctx, 0, 0, w, h, 0, "#fbfaf8");
   rr(ctx, 0, 0, 112, h, 0, "#f1efeb");
   for (let i = 0; i < 5; i++) rr(ctx, 18, 40 + i * 30, i === 0 ? 70 : 56, 10, 5, i === 0 ? "#cfcac3" : "#e0dcd6");
@@ -52,7 +52,7 @@ const laptopUI = canvasTexture(512, 336, (ctx, w, h) => {
   ctx.fillStyle = "#e40000"; ctx.beginPath(); ctx.arc(466, 206, 6, 0, Math.PI * 2); ctx.fill();
 });
 
-const phoneUI = canvasTexture(128, 256, (ctx, w, h) => {
+export const phoneUI = canvasTexture(128, 256, (ctx, w, h) => {
   rr(ctx, 0, 0, w, h, 0, "#fbfaf8");
   rr(ctx, 16, 22, 52, 10, 5, "#3b3c41");
   ctx.fillStyle = "#e40000"; ctx.beginPath(); ctx.arc(106, 27, 5, 0, Math.PI * 2); ctx.fill();
@@ -84,7 +84,7 @@ const SCREEN_FRAG = `
     #include <colorspace_fragment>
   }`;
 
-function screenMaterial(map) {
+export function screenMaterial(map) {
   return new THREE.ShaderMaterial({
     uniforms: { uMap: { value: map }, uOff: { value: OFF.clone() }, uOn: { value: 0 } },
     vertexShader: SCREEN_VERT, fragmentShader: SCREEN_FRAG, toneMapped: false,
@@ -111,6 +111,14 @@ function pool(x, y, z, r, { wall = false } = {}) {
 
 /* ---------- Zones ---------- */
 const zones = [];
+// Baseline: how lit the office already is before the red line arrives
+// (0 = dim new office, 1 = an office that is already running).
+const base = { level: 0, from: 0, to: 0, t: 1 };
+const eff = (z) => base.level + (1 - base.level) * z.level;
+export function setBaseline(b, { instant = false } = {}) {
+  if (instant) { base.level = base.from = base.to = b; base.t = 1; }
+  else if (b !== base.to) { base.from = base.level; base.to = b; base.t = 0; }
+}
 function zone(mark, weight, apply) {
   zones.push({ mark, weight, apply, level: 0, from: 0, to: 0, t: 1 });
 }
@@ -215,7 +223,7 @@ const totalWeight = zones.reduce((s, z) => s + z.weight, 0);
 
 export let warmth = 0;
 function applyRoom() {
-  warmth = zones.reduce((s, z) => s + z.level * z.weight, 0) / (totalWeight || 1);
+  warmth = zones.reduce((s, z) => s + eff(z) * z.weight, 0) / (totalWeight || 1);
   const g = warmth;
   look.saturation.value = 0.3 + 0.7 * g;
   if (renderer) renderer.toneMappingExposure = 0.52 + 0.48 * g;
@@ -248,7 +256,8 @@ function retarget(progress) {
 export function snap() {
   if (!line) return;
   retarget(line.progress);
-  for (const z of zones) { z.level = z.to; z.t = 1; z.apply(z.level); }
+  base.level = base.to; base.t = 1;
+  for (const z of zones) { z.level = z.to; z.t = 1; z.apply(eff(z)); }
   applyRoom();
   requestRender();
 }
@@ -257,11 +266,17 @@ if (renderer && line) {
   line.onChange(retarget);
   onFrame((dt) => {
     let busy = false;
+    let baseMoved = false;
+    if (base.t < 1) {
+      base.t = Math.min(1, base.t + dt / DURATION);
+      base.level = base.from + (base.to - base.from) * ease(base.t);
+      baseMoved = busy = true;
+    }
     for (const z of zones) {
-      if (z.t >= 1) continue;
+      if (z.t >= 1) { if (baseMoved) z.apply(eff(z)); continue; }
       z.t = Math.min(1, z.t + dt / DURATION);
       z.level = z.from + (z.to - z.from) * ease(z.t);
-      z.apply(z.level);
+      z.apply(eff(z));
       busy = true;
     }
     if (busy) applyRoom();

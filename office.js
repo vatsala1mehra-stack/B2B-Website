@@ -16,10 +16,18 @@ export const container = document.querySelector(".stage");
 const canvas = container.querySelector(".stage-canvas");
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-// The framing box: the canvas itself (it fills the scene area below the nav)
+// The framing box: the content box of .scene (below the nav), in canvas pixels.
+// The canvas fills the whole stage; the view is centred on this box.
+const sceneEl = container.querySelector(".scene");
 export function sceneRect() {
-  const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1;
-  return { x: 0, y: 0, w, h, W: w, H: h };
+  const c = canvas.getBoundingClientRect();
+  const r = sceneEl.getBoundingClientRect();
+  const pad = parseFloat(getComputedStyle(sceneEl).paddingTop) || 0;
+  return {
+    x: r.left - c.left, y: r.top - c.top + pad,
+    w: Math.max(1, r.width), h: Math.max(1, r.height - pad),
+    W: c.width || 1, H: c.height || 1,
+  };
 }
 
 // Small or low-power devices get a lighter build.
@@ -200,7 +208,7 @@ function buildRoom() {
 /* ------------------------------------------------------------------ */
 export const SEAT_H = 0.46;
 
-function chair(parent, x, z, rotY = 0) {
+export function chair(parent, x, z, rotY = 0) {
   const g = group(parent, x, 0, z, rotY);
   cylinder(g, M.clay, 0.24, 0.26, 0.04);
   cylinder(g, M.clay, 0.03, 0.03, SEAT_H - 0.12, 0, 0.04, 0);
@@ -210,8 +218,8 @@ function chair(parent, x, z, rotY = 0) {
 }
 
 // Desk: the user sits on local +z and faces -z; the laptop faces them.
-function desk({ id, x, z }) {
-  const g = group(office, x, 0, z);
+export function desk({ id, x, z }, parent = office, origin = { x: 0, z: 0 }) {
+  const g = group(parent, x - origin.x, 0, z - origin.z);
   const W = 1.55, D = 0.78, H = 0.74;
   block(g, M.wood, W, 0.05, D, 0, H - 0.05, 0, 0.02);
   for (const sx of [-1, 1]) block(g, M.clay, 0.05, H - 0.05, D - 0.08, sx * (W / 2 - 0.08), 0, 0, 0.02);
@@ -227,10 +235,11 @@ function desk({ id, x, z }) {
   chair(g, 0.05, 0.62);
   blob(g, 0, 0.1, 2.0, 1.5);
   parts[id] = { group: g, screen: screenMesh, seat: new THREE.Vector3(x + 0.05, SEAT_H, z + 0.7) };
+  return g;
 }
 
-function plant(x, z, size = 1) {
-  const g = group(office, x, 0, z);
+export function plant(x, z, size = 1, parent = office) {
+  const g = group(parent, x, 0, z);
   g.scale.setScalar(size);
   blob(g, 0, 0, 0.8, 0.8);
   cylinder(g, M.clay, 0.2, 0.15, 0.42);
@@ -311,7 +320,7 @@ function router({ x, y, z }) {
 /* ------------------------------------------------------------------ */
 function buildOffice() {
   buildRoom();
-  LAYOUT.desks.forEach(desk);
+  LAYOUT.desks.forEach((d) => desk(d));
   router(LAYOUT.router);
   server(LAYOUT.server);
   sofa(LAYOUT.sofa);

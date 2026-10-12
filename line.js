@@ -5,8 +5,8 @@ import * as THREE from "three";
 import { scene, renderer, onFrame, requestRender, LITE } from "./office.js";
 import { tween } from "./anim.js";
 
-const F = 0.04;          // floor height for the tube centre
-const G = -0.285;        // street (ground) height
+export const F = 0.04;   // floor height for the tube centre
+export const G = -0.285; // street (ground) height
 const TOP = 2.94;        // along the top of the walls
 
 // Waypoints. Named ones become marks other modules can react to.
@@ -29,7 +29,7 @@ const ROUTE = [
 const RADIUS = 0.025;
 const CORNER = 0.22;
 
-function buildPath(pts) {
+export function buildPath(pts) {
   const path = new THREE.CurvePath();
   let prev = pts[0].clone();
   for (let i = 1; i < pts.length - 1; i++) {
@@ -70,15 +70,16 @@ const FRAG = /* glsl */ `
     #include <colorspace_fragment>
   }`;
 
-export function createLine() {
-  const pts = ROUTE.map(([x, y, z]) => new THREE.Vector3(x, y, z));
+// Any route can become a red line; extra lines share the main line's colour object.
+export function createLine(route = ROUTE, { color } = {}) {
+  const pts = route.map(([x, y, z]) => new THREE.Vector3(x, y, z));
   const path = buildPath(pts);
   const length = path.getLength();
   const segments = Math.ceil(length * (LITE ? 14 : 22));
   const radial = LITE ? 6 : 8;
 
   const uniforms = {
-    uColor: { value: new THREE.Color("#e40000") },
+    uColor: { value: color || new THREE.Color("#e40000") },
     uDrawn: { value: 0 },
     uPulse: { value: -1 },
     uLen: { value: length },
@@ -104,7 +105,7 @@ export function createLine() {
   const samples = 1600;
   const sampled = Array.from({ length: samples + 1 }, (_, i) => path.getPointAt(i / samples));
   const marks = {};
-  ROUTE.forEach(([x, y, z, name], i) => {
+  route.forEach(([x, y, z, name], i) => {
     if (!name) return;
     const p = pts[i];
     let best = 0, bestD = Infinity;
