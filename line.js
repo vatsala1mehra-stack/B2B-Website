@@ -11,7 +11,7 @@ const TOP = 2.94;        // along the top of the walls
 
 // Waypoints. Named ones become marks other modules can react to.
 const ROUTE = [
-  [8.6, G, 3.0, "street"], [5.25, G, 3.0], [5.25, F, 3.0], [4.85, F, 3.0],
+  [6.5, G, 3.0, "street"], [5.25, G, 3.0], [5.25, F, 3.0], [4.85, F, 3.0],
   // Phones: past each person's feet
   [2.1, F, 2.85, "Kabir"], [0.85, F, 1.95, "Arjun"], [1.85, F, 0.75, "Riya"], [3.3, F, 1.25, "Meera"],
   // Router: along the right, up the back wall and down again
@@ -57,15 +57,15 @@ const VERT = /* glsl */ `
 
 const FRAG = /* glsl */ `
   uniform vec3 uColor;
-  uniform float uDrawn, uPulse, uLen, uPulseAmt, uGlow;
+  uniform float uDrawn, uPulse, uLen, uPulseAmt, uGlow, uBoost;
   varying float vU;
   varying float vFacing;
   void main() {
     if (vU > uDrawn) discard;
     float d = (vU - uPulse) * uLen;
     float p = exp(-d * d * 1.2) * uPulseAmt;
-    vec3 col = mix(uColor, vec3(1.0, 0.42, 0.36), p);
-    float a = uGlow > 0.5 ? (0.16 + 0.22 * p) * pow(vFacing, 1.6) : 1.0;
+    vec3 col = mix(uColor, vec3(1.0, 0.42, 0.36), p) * uBoost;   // HDR so bloom picks it up
+    float a = uGlow > 0.5 ? (0.2 + 0.25 * p) * pow(vFacing, 1.4) : 1.0;
     gl_FragColor = vec4(col, a);
     #include <colorspace_fragment>
   }`;
@@ -83,6 +83,7 @@ export function createLine() {
     uPulse: { value: -1 },
     uLen: { value: length },
     uPulseAmt: { value: 0.38 },   // very faint
+    uBoost: { value: 1.0 },   // colour is pre-compensated for tone mapping (lighting.js)
   };
   const makeMat = (glow) => new THREE.ShaderMaterial({
     uniforms: { ...uniforms, uGlow: { value: glow ? 1 : 0 } },
@@ -91,11 +92,12 @@ export function createLine() {
   });
 
   const coreGeo = new THREE.TubeGeometry(path, segments, RADIUS, radial, false);
-  const glowGeo = new THREE.TubeGeometry(path, segments, RADIUS * 3.2, radial, false);
+  const glowGeo = new THREE.TubeGeometry(path, segments, RADIUS * 3.8, radial, false);
   const core = new THREE.Mesh(coreGeo, makeMat(false));
   const glow = new THREE.Mesh(glowGeo, makeMat(true));
   glow.renderOrder = 2;
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(RADIUS, 12, 8), new THREE.MeshBasicMaterial({ color: "#e40000", toneMapped: false }));
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(RADIUS, 12, 8), new THREE.MeshBasicMaterial({ toneMapped: false }));
+  tip.material.color = uniforms.uColor.value;   // same Color object, so it follows the line
   for (const m of [core, glow, tip]) { m.frustumCulled = false; scene.add(m); }
 
   // Marks: where each named waypoint sits along the line (0..1)
@@ -153,6 +155,7 @@ export function createLine() {
 
   return {
     path, length, marks, growTo, set,
+    color: uniforms.uColor.value,   // shared with the tip
     get progress() { return drawn; },
     onChange: (fn) => (listeners.add(fn), () => listeners.delete(fn)),
   };

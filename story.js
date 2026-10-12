@@ -2,11 +2,12 @@
 // each beat plays as a calm sequence: camera glides → line grows and the
 // area lights up → people change posture → the words fade in.
 import * as THREE from "three";
-import { renderer, view, applyView, viewForBox, officeBox, requestRender, container } from "./office.js";
+import { renderer, view, applyView, viewForBox, officeBox, requestRender, container, sceneRect } from "./office.js";
 import { line } from "./line.js";
 import { snap as snapLights } from "./lighting.js";
 import { poseBeat } from "./people.js";
 import { tween, wait } from "./anim.js";
+import "./leaves.js";
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const copies = [...document.querySelectorAll(".copy")];
@@ -17,12 +18,12 @@ const box = (x1, y1, z1, x2, y2, z2) => new THREE.Box3(new THREE.Vector3(x1, y1,
 
 // What each beat frames and how far the line has travelled. Portrait screens
 // get a tighter box around the part of the room that matters in that beat.
-const portrait = () => container.clientWidth / Math.max(1, container.clientHeight) < 1;
+const portrait = () => { const r = sceneRect(); return r.w / r.h < 1; };
 const BEATS = [
   { wide: [box(0.6, 0, 0.6, 3.5, 1.8, 2.8), 1.3],    tall: [box(0.8, 0.2, 0.8, 3.3, 1.8, 2.6), 1.12], line: () => 0 },
   { wide: [box(0.6, 0, 0.4, 5.3, 1.8, 3.3), 1.12],   tall: [box(0.6, 0, 0.5, 4.6, 1.8, 3.2), 1.04],   line: () => line.marks.Meera },
   { wide: [box(-1.1, 0, -4.0, 3.9, 2.2, 0.4), 1.08], tall: [box(-0.8, 0, -4.0, 3.7, 2.1, -0.3), 1.0], line: () => line.marks.deskD },
-  { wide: [box(-4.4, 0, -1.3, 1.3, 1.2, 2.3), 1.08], tall: [box(-4.4, 0, -1.0, 0.9, 1.3, 2.1), 1.0],  line: () => line.marks.frontDesk },
+  { wide: [box(-4.4, 0, -1.3, 1.3, 1.2, 2.3), 1.08], tall: [box(-4.4, 0, -1.0, 0.9, 1.3, 2.1), 1.1],  line: () => line.marks.frontDesk },
   { wide: [officeBox, 1.05],                         tall: [officeBox, 0.98],                         line: () => 1 },
   // The ending: the camera rises over the fully lit office
   { wide: [officeBox, 1.16], tall: [officeBox, 1.04], dir: new THREE.Vector3(1, 1.55, 1).normalize(), line: () => 1 },

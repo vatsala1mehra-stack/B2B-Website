@@ -30,6 +30,14 @@ This is the design brief every future change must follow. If a change conflicts 
 - The camera glides; it never cuts. It starts close on the team and only pulls back fully at the end.
 - Nothing loops except a very faint pulse along the red line.
 - Respect `prefers-reduced-motion`: show each beat's end state with a fade.
+- **Approved exceptions (owner request):** a few leaves drift down from clay trees outside the office (warm wood tones only, sparse, slow), and the isometric view turns gently towards the cursor (fine pointers only). Both are ambient, never compete with a beat's change, and switch off for reduced motion.
+
+## Rendering
+
+- Clay-render look: soft image-based studio light, soft shadows plus contact shadows under every object.
+- Bloom only on true light sources (screens, lamp, LEDs); the background never blooms.
+- The red line stays exactly `#e40000` after tone mapping (its colour is pre-compensated), with a soft halo.
+- The canvas background is solved to match the page colour exactly, so there is never a visible edge.
 
 ## Type & UI rules
 

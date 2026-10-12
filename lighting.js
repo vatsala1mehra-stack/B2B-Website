@@ -3,7 +3,7 @@
 // eases from 0 to 1 over ~1.4s (and back if the line retracts). The whole room's
 // colour, exposure and warmth follow the zones, reaching full warm light at the end.
 import * as THREE from "three";
-import { scene, renderer, lights, look, parts, onFrame, requestRender, LAYOUT, material } from "./office.js";
+import { scene, renderer, lights, look, parts, onFrame, requestRender, LAYOUT, material, export_bg as sceneBg } from "./office.js";
 import { people } from "./people.js";
 import { line } from "./line.js";
 import { ease } from "./anim.js";
@@ -79,7 +79,7 @@ const SCREEN_FRAG = `
   uniform sampler2D uMap; uniform vec3 uOff; uniform float uOn;
   varying vec2 vUv;
   void main(){
-    vec3 on = texture2D(uMap, vUv).rgb * 1.02;
+    vec3 on = texture2D(uMap, vUv).rgb * 1.8;   // HDR: a soft bloom
     gl_FragColor = vec4(mix(uOff, on, uOn), 1.0);
     #include <colorspace_fragment>
   }`;
@@ -92,7 +92,7 @@ function screenMaterial(map) {
 }
 
 function glowMaterial(color) {
-  return new THREE.MeshBasicMaterial({ color: OFF.clone(), toneMapped: false, userData: { on: new THREE.Color(color) } });
+  return new THREE.MeshBasicMaterial({ color: OFF.clone(), toneMapped: false, userData: { on: new THREE.Color(color).multiplyScalar(4) } });   // HDR: blooms
 }
 
 const POOL_GEO = new THREE.PlaneGeometry(1, 1);
@@ -160,7 +160,7 @@ if (renderer && line) {
     const counterGlow = pool(x - 0.45, 0.80, z - 0.55, 0.55);
     zone("frontDesk", 0.12, (k) => {
       setGlow(fd.phoneKeys.material, k);
-      shade.emissive.copy(WARM).multiplyScalar(0.9 * k);
+      shade.emissive.copy(WARM).multiplyScalar(3.2 * k);
       lampPool.material.opacity = 0.42 * k;
       counterGlow.material.opacity = 0.5 * k;
     });
@@ -187,6 +187,30 @@ const COOL_SKY = new THREE.Color(0xe3e7ee), WARM_SKY = new THREE.Color(0xfff3e4)
 const COOL_GROUND = new THREE.Color(0xa9a6a1), WARM_GROUND = new THREE.Color(0xc9b8a4);
 const COOL_SUN = new THREE.Color(0xeef0f4), WARM_SUN = new THREE.Color(0xfff0dc);
 const BG_DIM = new THREE.Color("#d3d4d7"), BG_WARM = new THREE.Color("#f4efe9");
+const SKY_DAWN = new THREE.Color(0x8f98a8), SKY_DAY = new THREE.Color(0xfff1de);
+const AIRTEL_RED = new THREE.Color("#e40000");
+
+// The canvas background goes through ACES tone mapping in the output pass.
+// Solve for the scene colour that comes out as the exact page colour.
+function aces([r, g, b], exposure) {
+  const e = exposure / 0.6; r *= e; g *= e; b *= e;
+  const ir = 0.59719 * r + 0.35458 * g + 0.04823 * b;
+  const ig = 0.076 * r + 0.90834 * g + 0.01566 * b;
+  const ib = 0.0284 * r + 0.13383 * g + 0.83777 * b;
+  const f = (v) => (v * (v + 0.0245786) - 0.000090537) / (v * (0.983729 * v + 0.432951) + 0.238081);
+  const fr = f(ir), fg = f(ig), fb = f(ib);
+  const c = (v) => Math.min(1, Math.max(0, v));
+  return [c(1.60475 * fr - 0.53108 * fg - 0.07367 * fb), c(-0.10208 * fr + 1.10813 * fg - 0.00605 * fb), c(-0.00327 * fr - 0.07276 * fg + 1.07602 * fb)];
+}
+function untoneMapped(target, exposure, out) {
+  const t = [target.r, target.g, target.b];
+  const x = [...t];
+  for (let i = 0; i < 24; i++) {
+    const y = aces(x, exposure);
+    for (let k = 0; k < 3; k++) x[k] = Math.min(20, Math.max(0, x[k] * (t[k] / Math.max(y[k], 1e-4))));
+  }
+  return out.setRGB(x[0], x[1], x[2]);
+}
 const totalWeight = zones.reduce((s, z) => s + z.weight, 0);
 
 export let warmth = 0;
@@ -194,16 +218,22 @@ function applyRoom() {
   warmth = zones.reduce((s, z) => s + z.level * z.weight, 0) / (totalWeight || 1);
   const g = warmth;
   look.saturation.value = 0.3 + 0.7 * g;
-  if (renderer) renderer.toneMappingExposure = 0.7 + 0.38 * g;
+  if (renderer) renderer.toneMappingExposure = 0.52 + 0.48 * g;
   if (lights.hemi) {
     lights.hemi.color.copy(COOL_SKY).lerp(WARM_SKY, g);
     lights.hemi.groundColor.copy(COOL_GROUND).lerp(WARM_GROUND, g);
-    lights.hemi.intensity = 1.25 + 0.35 * g;
+    lights.hemi.intensity = 0.75 + 0.3 * g;
     lights.sun.color.copy(COOL_SUN).lerp(WARM_SUN, g);
     lights.sun.intensity = 1.6 + 0.5 * g;
   }
   const bg = BG_DIM.clone().lerp(BG_WARM, g);
   document.documentElement.style.setProperty("--bg", `#${bg.getHexString()}`);
+  if (renderer) {
+    untoneMapped(bg, renderer.toneMappingExposure, sceneBg);
+    // Keep the line exactly Airtel red after tone mapping, whatever the exposure
+    if (line) untoneMapped(AIRTEL_RED, renderer.toneMappingExposure, line.color);
+  }
+  parts.sky?.material.color.copy(SKY_DAWN).lerp(SKY_DAY, g);
 }
 
 /* ---------- Link to the line ---------- */

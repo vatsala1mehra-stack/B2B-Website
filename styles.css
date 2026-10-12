@@ -63,10 +63,28 @@ body {
 .beats { margin-top: -100vh; margin-top: -100svh; }
 .beat { height: 100vh; height: 100svh; scroll-snap-align: start; scroll-snap-stop: always; }
 
-.scene { position: relative; min-height: 0; padding-top: calc(var(--nav-h) + var(--safe-t)); opacity: 0; transition: opacity 1.2s ease; }
-.scene.is-ready { opacity: 1; }
-.scene.is-fading { opacity: 0; transition-duration: 0.35s; }
-.scene canvas { display: block; width: 100%; height: 100%; }
+.scene { position: relative; min-height: 0; padding-top: calc(var(--nav-h) + var(--safe-t)); }
+
+/* The canvas fills the scene box (below the nav); its background matches the page exactly */
+.stage-canvas {
+  position: absolute; left: 0; right: 0; bottom: 0; top: calc(var(--nav-h) + var(--safe-t));
+  width: 100%; height: calc(100% - var(--nav-h) - var(--safe-t)); display: block;
+  opacity: 0; transition: opacity 1.2s ease;
+}
+.stage.is-ready .stage-canvas { opacity: 1; }
+.stage.is-fading .stage-canvas { opacity: 0; transition-duration: 0.35s; }
+.scene { z-index: 1; }
+.copies { z-index: 3; }
+
+/* Finish: a soft vignette and a whisper of film grain (static) */
+.stage::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background:
+    radial-gradient(120% 90% at 50% 38%, transparent 55%, rgb(40 32 26 / 0.16) 100%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  mix-blend-mode: multiply;
+}
+.no-3d .stage::after { display: none; }
 
 /* Loading: a faint outline of the room while the scene builds (no spinner) */
 .stage::before {
@@ -76,13 +94,12 @@ body {
   transform: scaleY(0.58) rotate(45deg);
   transition: opacity 0.8s ease; pointer-events: none;
 }
-.stage:has(.scene.is-ready)::before, .no-3d .stage::before { opacity: 0; }
+.stage.is-ready::before, .no-3d .stage::before { opacity: 0; }
 
 /* No WebGL: the poster of the finished office stands in for the scene */
 .poster { display: none; }
 .no-3d { --bg: #f4efe9; }  /* match the poster's warm background */
-.no-3d .scene { opacity: 1; }
-.no-3d .scene canvas { display: none; }
+.no-3d .stage-canvas { display: none; }
 .no-3d .poster { display: block; width: 100%; height: 100%; object-fit: contain; padding: 8px var(--gutter); }
 
 .copies { position: relative; }

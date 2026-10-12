@@ -1,7 +1,7 @@
 // Four figurines. They tell the story through posture only:
 // standing unsure → looking at glowing phones → seated working → relaxed.
 import * as THREE from "three";
-import { office, material, capsule, sphere, mesh, group, block, plane, cached, CURVE, SKIN, CLOTH, M, parts, SEAT_H, requestRender, renderer } from "./office.js";
+import { office, material, capsule, sphere, mesh, group, block, plane, blob, blobMaterial, cached, CURVE, SKIN, CLOTH, M, parts, SEAT_H, requestRender, renderer } from "./office.js";
 import { tween } from "./anim.js";
 
 const HIP_STAND = 0.9;
@@ -43,6 +43,8 @@ function figure(name, { skin, top, bottom, hair }) {
 
   const root = group(office);
   root.name = name;
+  const shadowMat = blobMaterial(0.9);
+  blob(root, 0, 0.05, 0.75, 0.75, shadowMat);
   const hips = group(root, 0, HIP_STAND, 0);
 
   const legs = [-1, 1].map((sx) => {
@@ -78,9 +80,9 @@ function figure(name, { skin, top, bottom, hair }) {
   const phoneScreen = plane(phone, M.dark, 0.07, 0.14, 0, 0, 0.0075);
 
   const meshes = [];
-  root.traverse((o) => o.isMesh && meshes.push(o));
+  root.traverse((o) => o.isMesh && o.material !== shadowMat && meshes.push(o));
 
-  const p = { name, root, hips, torso, head, legs, arms, phone, phoneScreen, skin: mats.skin, mats, meshes, pose: null };
+  const p = { name, root, hips, torso, head, legs, arms, phone, phoneScreen, skin: mats.skin, mats, meshes, shadowMat, pose: null };
   people[name] = p;
   return p;
 }
@@ -111,6 +113,7 @@ function setOpacity(p, k) {
   for (const m of Object.values(p.mats)) m.opacity = k;
   p.phoneScreen.material.transparent = true;
   p.phoneScreen.material.opacity = k;
+  p.shadowMat.opacity = 0.9 * k;
   const cast = k > 0.98;
   for (const m of p.meshes) m.castShadow = cast;
 }

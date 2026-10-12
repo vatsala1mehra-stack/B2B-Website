@@ -2,10 +2,25 @@
 // Exports the scene core that line.js, lighting and the story build on.
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { stepTweens } from "./anim.js";
 
-export const container = document.querySelector(".scene");
-const canvas = container.querySelector("canvas");
+// The canvas fills the whole stage; the office is framed inside the .scene box
+// (top 60% on phones), so nothing in 3D ever sits under the words.
+export const container = document.querySelector(".stage");
+const canvas = container.querySelector(".stage-canvas");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+// The framing box: the canvas itself (it fills the scene area below the nav)
+export function sceneRect() {
+  const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1;
+  return { x: 0, y: 0, w, h, W: w, H: h };
+}
 
 // Small or low-power devices get a lighter build.
 export const LITE =
@@ -33,7 +48,7 @@ function satCompile(shader) {
 }
 
 export function material(color, roughness = 0.92, extra = {}) {
-  const m = new THREE.MeshStandardMaterial({ color, roughness, metalness: 0, ...extra });
+  const m = new THREE.MeshStandardMaterial({ color, roughness, metalness: 0, envMapIntensity: 0.3, ...extra });
   m.onBeforeCompile = satCompile;
   return m;
 }
@@ -99,6 +114,35 @@ export function group(parent, x = 0, y = 0, z = 0, rotY = 0) {
   return g;
 }
 
+// Soft contact shadow under an object: grounds it like ambient occlusion.
+const blobTex = (() => {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const ctx = c.getContext("2d");
+  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, "rgba(40,32,26,0.55)");
+  g.addColorStop(0.55, "rgba(40,32,26,0.22)");
+  g.addColorStop(1, "rgba(40,32,26,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+})();
+const BLOB_GEO = new THREE.PlaneGeometry(1, 1);
+export const blobMaterial = (opacity = 1) =>
+  new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false, opacity, polygonOffset: true, polygonOffsetFactor: -1 });
+const BLOB_MAT = blobMaterial(0.9);
+export function blob(parent, x, z, w, d, mat = BLOB_MAT) {
+  const m = new THREE.Mesh(BLOB_GEO, mat);
+  m.rotation.x = -Math.PI / 2;
+  m.position.set(x, 0.004, z);
+  m.scale.set(w, d, 1);
+  m.renderOrder = 1;
+  parent.add(m);
+  return m;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Layout — one source of truth for where things are                  */
 /* ------------------------------------------------------------------ */
@@ -134,6 +178,21 @@ function buildRoom() {
   block(office, M.clay, wall, win.y2 - win.y1, win.z1 - zA, lx, win.y1, (zA + win.z1) / 2, 0);
   block(office, M.clay, wall, win.y2 - win.y1, zB - win.z2, lx, win.y1, (win.z2 + zB) / 2, 0);
   block(office, M.wood, wall + 0.08, 0.04, win.z2 - win.z1, lx + 0.04, win.y1, (win.z1 + win.z2) / 2, 0.015);
+
+  // Morning sky beyond the window; lighting.js warms it from dawn to day
+  const sky = document.createElement("canvas");
+  sky.width = 4; sky.height = 64;
+  const ctx = sky.getContext("2d");
+  const g = ctx.createLinearGradient(0, 0, 0, 64);
+  g.addColorStop(0, "#ffffff"); g.addColorStop(1, "#d9d2c8");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 4, 64);
+  const tex = new THREE.CanvasTexture(sky);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const skyMat = new THREE.MeshBasicMaterial({ map: tex, color: 0x8f98a8 });
+  const card = mesh(new THREE.PlaneGeometry(win.z2 - win.z1 + 1.2, win.y2 - win.y1 + 1.0), skyMat, office, x0 - 0.9, (win.y1 + win.y2) / 2, (win.z1 + win.z2) / 2, false);
+  card.rotation.y = Math.PI / 2;
+  card.receiveShadow = false;
+  parts.sky = { material: skyMat };
 }
 
 /* ------------------------------------------------------------------ */
@@ -166,12 +225,14 @@ function desk({ id, x, z }) {
   const screenMesh = plane(lid, M.dark, 0.37, 0.24, 0, 0.15, 0.0095);
 
   chair(g, 0.05, 0.62);
+  blob(g, 0, 0.1, 2.0, 1.5);
   parts[id] = { group: g, screen: screenMesh, seat: new THREE.Vector3(x + 0.05, SEAT_H, z + 0.7) };
 }
 
 function plant(x, z, size = 1) {
   const g = group(office, x, 0, z);
   g.scale.setScalar(size);
+  blob(g, 0, 0, 0.8, 0.8);
   cylinder(g, M.clay, 0.2, 0.15, 0.42);
   cylinder(g, M.wood, 0.012, 0.012, 0.35, 0, 0.42, 0);
   const leaves = [
@@ -185,6 +246,7 @@ function sofa({ x, z }) {
   // Faces +x, back against the left wall
   const g = group(office, x, 0, z, Math.PI / 2);
   const L = 2.0, D = 0.86;
+  blob(g, 0, 0, L + 0.6, D + 0.5);
   for (const sx of [-1, 1]) for (const sz of [-1, 1])
     cylinder(g, M.wood, 0.03, 0.025, 0.08, sx * (L / 2 - 0.12), 0, sz * (D / 2 - 0.12));
   block(g, M.clay, L, 0.24, D, 0, 0.08, 0, 0.06);
@@ -197,6 +259,7 @@ function sofa({ x, z }) {
 function frontDesk({ x, z }) {
   // Reception counter; visitors approach from local +z (world +x)
   const g = group(office, x, 0, z, Math.PI / 2);
+  blob(g, 0, -0.1, 2.6, 1.6);
   block(g, M.clay, 2.0, 1.0, 0.56, 0, 0, 0.12, 0.06);
   block(g, M.wood, 2.08, 0.05, 0.34, 0, 1.0, 0.24, 0.02);
   block(g, M.clay, 2.0, 0.05, 0.62, 0, 0.72, -0.38, 0.02);
@@ -225,6 +288,7 @@ function frontDesk({ x, z }) {
 
 function server({ x, z }) {
   const g = group(office, x, 0, z, Math.PI / 2); // front faces +x
+  blob(g, 0, 0, 1.0, 1.0);
   block(g, M.clay, 0.58, 1.85, 0.62, 0, 0, 0, 0.04);
   for (let i = 0; i < 6; i++) block(g, M.dark, 0.34, 0.012, 0.01, -0.04, 1.2 + i * 0.07, 0.312, 0.004);
   const leds = [];
@@ -284,20 +348,31 @@ export function requestRender({ shadows = false } = {}) {
 export const VIEW_DIR = new THREE.Vector3(1, 0.86, 1).normalize();
 export const view = { target: new THREE.Vector3(), size: 5, dir: VIEW_DIR.clone() };
 
+// Pointer parallax: a gentle turn of the isometric view towards the cursor.
+export const parallax = { x: 0, y: 0, tx: 0, ty: 0 };
+const _dir = new THREE.Vector3();
+const _up = new THREE.Vector3(0, 1, 0);
+
 export function applyView() {
-  const w = container.clientWidth, h = container.clientHeight;
-  if (!w || !h) return;
-  const aspect = w / h;
-  camera.position.copy(view.target).addScaledVector(view.dir, 40);
+  const r = sceneRect();
+  if (!r.W || !r.H) return;
+  // Turn the view direction a little around the vertical axis and tilt it
+  _dir.copy(view.dir).applyAxisAngle(_up, parallax.x * 0.14);
+  _dir.y += parallax.y * 0.12;
+  _dir.normalize();
+  camera.position.copy(view.target).addScaledVector(_dir, 40);
   camera.lookAt(view.target);
-  Object.assign(camera, { left: -view.size * aspect, right: view.size * aspect, top: view.size, bottom: -view.size });
+  // The view's target sits at the centre of the scene box, which may be off-centre
+  const wpp = (view.size * 2) / r.h;
+  const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+  Object.assign(camera, { left: -cx * wpp, right: (r.W - cx) * wpp, top: cy * wpp, bottom: -(r.H - cy) * wpp });
   camera.updateProjectionMatrix();
   requestRender();
 }
 
 // Smallest view (for the current canvas aspect) that fits a box, with padding.
 export function viewForBox(box, pad = 1.08, dir = VIEW_DIR) {
-  const w = container.clientWidth || 1, h = container.clientHeight || 1;
+  const { w, h } = sceneRect();
   const aspect = w / h;
   const cam = new THREE.OrthographicCamera();
   const target = box.getCenter(new THREE.Vector3());
@@ -319,6 +394,9 @@ export function viewForBox(box, pad = 1.08, dir = VIEW_DIR) {
 }
 
 export const officeBox = new THREE.Box3();
+export let composer = null;
+export const export_bg = new THREE.Color();   // linear colour behind the scene (set by lighting.js)
+let bloom = null;
 
 if (renderer) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, LITE ? 1.5 : 2));
@@ -326,7 +404,15 @@ if (renderer) {
   renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.shadowMap.autoUpdate = false;   // re-rendered only when something moves
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.7;      // dim: nobody has switched anything on
+  renderer.toneMappingExposure = 0.52;     // dim: nobody has switched anything on
+
+  // Soft studio light from a procedural room: the clay-render look
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+  pmrem.dispose();
+  // The page colour is composited behind the scene in post (see BackgroundPass),
+  // so the background never blooms.
+  export_bg.copy(new THREE.Color(0xd3d4d7));
 
   buildOffice();
   scene.add(office);
@@ -338,7 +424,7 @@ if (renderer) {
   ground.receiveShadow = true;
   scene.add(ground);
 
-  lights.hemi = new THREE.HemisphereLight(0xe3e7ee, 0xa9a6a1, 1.25);
+  lights.hemi = new THREE.HemisphereLight(0xe3e7ee, 0xa9a6a1, 0.75);
   scene.add(lights.hemi);
 
   const sun = new THREE.DirectionalLight(0xeef0f4, 1.6);
@@ -358,6 +444,29 @@ if (renderer) {
 
   Object.assign(view, viewForBox(officeBox, LITE ? 1.02 : 1.08));
 
+  // Post: bloom makes the line, screens, lamp and lights actually glow.
+  // 1. scene on a transparent background  2. page colour behind it (alpha kept)
+  // 3. bloom only where there is something (alpha) and it is brighter than white
+  // 4. tone mapping + sRGB
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  const bgPass = new ShaderPass({
+    uniforms: { tDiffuse: { value: null }, uBg: { value: export_bg } },
+    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `uniform sampler2D tDiffuse; uniform vec3 uBg; varying vec2 vUv;
+      void main(){ vec4 c = texture2D(tDiffuse, vUv); gl_FragColor = vec4(uBg * (1.0 - c.a) + c.rgb, c.a); }`,
+  });
+  bgPass.uniforms.uBg.value = export_bg;   // ShaderPass clones uniforms; re-link so lighting.js updates reach it
+  composer.addPass(bgPass);
+  bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.6, 0.45, 1.6);
+  const hp = bloom.materialHighPassFilter;
+  hp.fragmentShader = hp.fragmentShader
+    .replace("float v = dot( texel.xyz, luma );", "float v = max(max(texel.r, texel.g), texel.b);")   // red can glow too
+    .replace("gl_FragColor = mix( outputColor, texel, alpha );", "alpha *= step(0.5, texel.a); gl_FragColor = mix( outputColor, texel, alpha );");
+  hp.needsUpdate = true;
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+
   let running = true;
   const clock = new THREE.Clock();
   function loop() {
@@ -366,21 +475,33 @@ if (renderer) {
     const dt = Math.min(clock.getDelta(), 0.1);
     let busy = stepTweens(dt);
     for (const cb of frameCallbacks) busy = cb(dt) || busy;
+    // Ease the parallax towards the pointer
+    const px = parallax.tx - parallax.x, py = parallax.ty - parallax.y;
+    if (Math.abs(px) > 1e-4 || Math.abs(py) > 1e-4) {
+      const k = 1 - Math.exp(-dt * 3);
+      parallax.x += px * k; parallax.y += py * k;
+      applyView();
+      busy = true;
+    }
     if (busy) dirty = true;
     if (dirty) {
       dirty = false;
-      renderer.render(scene, camera);
+      composer.render();
     }
   }
 
   function resize() {
-    const w = container.clientWidth, h = container.clientHeight;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h, false);
+    composer.setPixelRatio(renderer.getPixelRatio());
+    composer.setSize(w, h);
+    const scale = LITE ? 0.25 : 0.5;
+    bloom.resolution.set(w * scale, h * scale);
     container.dispatchEvent(new CustomEvent("resize-scene"));
     applyView();
   }
-  new ResizeObserver(resize).observe(container);
+  new ResizeObserver(resize).observe(canvas);
   resize();
   renderer.shadowMap.needsUpdate = true;
   requestAnimationFrame(loop);
@@ -392,6 +513,18 @@ if (renderer) {
     running = on;
     if (on) { clock.getDelta(); dirty = true; requestAnimationFrame(loop); }
   };
+  // Pointer parallax (fine pointers only; off for reduced motion)
+  if (window.matchMedia("(pointer: fine)").matches) {
+    window.addEventListener("pointermove", (e) => {
+      if (reduceMotion.matches) return;
+      parallax.tx = (e.clientX / window.innerWidth - 0.5) * 2;
+      parallax.ty = (e.clientY / window.innerHeight - 0.5) * 2;
+      if (!running) return;
+      dirty = true;
+    }, { passive: true });
+    document.documentElement.addEventListener("pointerleave", () => { parallax.tx = 0; parallax.ty = 0; });
+  }
+
   let onScreen = true;
   new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; setRunning(onScreen && !document.hidden); }).observe(container);
   document.addEventListener("visibilitychange", () => setRunning(onScreen && !document.hidden));
