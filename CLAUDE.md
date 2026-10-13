@@ -6,7 +6,8 @@ This is the design brief every future change must follow. If a change conflicts 
 
 - **"Your office. Taken care of."** A clay office comes to life as a single red line (Airtel) runs through it, connecting the team, the internet, customers and security. One continuous line = one partner.
 - **Experience the service, don't hear a pitch.** A visitor sees exactly what changes in their office, what they would buy, and why to trust Airtel, before talking to anyone.
-- **Light tells the story:** wherever the red line arrives, that area warms and lights up.
+- **Light tells the story:** it starts before dawn: a dark office in a dark world. The red line is the light: a red glow travels with it, and wherever it arrives that area switches on its own warm light. When the loop closes, daylight breaks.
+- **Cinematic, not diagrammatic:** a perspective camera with a planned shot per beat (eye-level close-ups, push-ins, a final rise), like film. The focal point moves to whatever is changing.
 
 ## Story: choose a move, then 5 beats, then the plan
 
@@ -36,7 +37,7 @@ All story copy lives in `config.js` (`paths`), so the business team can edit it.
 - **Materials:** one matte white clay, one warm wood, red (`#e40000`) ONLY for the line and key accents. No other colours except subtle skin and clothing tones.
 - **People:** simple figurine style. They express the story through posture (standing unsure → seated working → relaxed), never speech bubbles.
 - No icons, emoji, badges or labels in the 3D scene.
-- Soft shadows, gentle ambient light, slight warm shift as the story progresses.
+- Soft shadows. Night: cool moonlight, depth haze, warm practical lights (phones, desks, lamp, server). Day: soft warm daylight, no haze.
 
 ## Motion rules
 
@@ -49,14 +50,17 @@ All story copy lives in `config.js` (`paths`), so the business team can edit it.
 ## Rendering
 
 - Clay-render look: soft image-based studio light, soft shadows plus contact shadows under every object.
+- Perspective camera (about 30° field of view). Close-ups look in from the open side of the room so the space beside the subject, where the words sit, is dark night rather than lit walls.
+- Depth haze (fog) only in the dark; it fades to nothing by daylight. Fog colour always equals the page colour.
 - Bloom only on true light sources (screens, lamp, LEDs); the background never blooms.
 - The red line stays exactly `#e40000` after tone mapping (its colour is pre-compensated), with a soft halo.
 - The canvas background is solved to match the page colour exactly, so there is never a visible edge.
 
 ## Type & UI rules
 
-- One large centred headline per beat, lots of space. No cards, chips or checklists during the story.
-- Progress: 5 small dots at the edge; the active dot is red.
+- One large headline per beat, lots of space. Desktop: editorial layout with a chapter label, headline, sentence and "You get" on the left, and the scene framed on the right. Phones: scene on top, words below, centred. No cards, chips or checklists during the story.
+- Progress: 5 markers. Numbered chapters (01–05) along the bottom-left on desktop, small dots on phones; the active one is red.
+- Words are light on the dark office and dark once it's light; the page colour follows the scene.
 - **Navigation like a real B2B site:** brand slot, Solutions (the three paths), Products (the catalogue), Why Airtel, Support, "Talk to sales", and "Buy online" (quiet in the nav, one confident call to action at the end). Phones get a menu button.
 - The words sit directly on the scene: no panels, bands, fades or overlays behind them. Each beat frames its important area away from the text.
 

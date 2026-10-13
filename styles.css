@@ -15,6 +15,11 @@
   color-scheme: light;
 }
 
+/* The story starts in the dark: light words on a dark office, dark words once it's lit */
+html.is-dark { --text: #f3f1ee; --text-muted: #b6b9c2; --dot: rgb(243 241 238 / 0.5); }
+.ending, .why, .nav.is-solid, .mobile-menu, .menu-panel, .menu-open .nav { --text: #1d1e22; --text-muted: #5b5d64; --dot: rgb(29 30 34 / 0.56); }
+body { transition: color 0.6s ease; }
+
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 .skip-link {
@@ -133,7 +138,7 @@ body {
 .stage::before {
   content: ""; position: absolute; left: 50%; top: calc(var(--nav-h) + (60svh - var(--nav-h)) / 2);
   width: min(56vw, 360px); aspect-ratio: 1; translate: -50% -50%;
-  border: 1.5px solid rgb(29 30 34 / 0.14); border-radius: 6%;
+  border: 1.5px solid rgb(128 128 132 / 0.28); border-radius: 6%;
   transform: scaleY(0.58) rotate(45deg);
   transition: opacity 0.8s ease; pointer-events: none;
 }
@@ -180,7 +185,7 @@ body {
 .moves { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; width: min(100%, 360px); }
 .move {
   min-height: 52px; padding: 0 22px; border-radius: 999px; cursor: pointer;
-  font: inherit; font-weight: 700; font-size: 1.0625rem; color: var(--text);
+  font: inherit; font-weight: 700; font-size: 1.0625rem; color: #1d1e22;
   background: rgb(255 255 255 / 0.9); border: 0; box-shadow: inset 0 0 0 1.5px rgb(29 30 34 / 0.18), 0 6px 20px rgb(0 0 0 / 0.06);
   transition: box-shadow 0.2s, color 0.2s;
 }
@@ -202,12 +207,34 @@ body {
 .dots button.is-active span { background: var(--brand-red); }
 .dots.is-hidden { opacity: 0; pointer-events: none; }
 
-@media (min-width: 900px) and (min-height: 560px) {
-  .stage { grid-template-rows: 62fr 38fr; }
-  .stage::before { top: calc(var(--nav-h) + (62svh - var(--nav-h)) / 2); }
-  .nav { padding-left: 32px; padding-right: 32px; }
-  .copy { padding-bottom: 24px; }
-  .dots { left: auto; bottom: auto; right: calc(12px + var(--safe-r)); top: 50%; transform: translateY(-50%); flex-direction: column; }
+/* Desktop: editorial layout. Chapter, headline and words on the left; the scene framed on the right */
+@media (min-width: 960px) and (min-height: 560px) {
+  .stage { grid-template-rows: 1fr; grid-template-columns: minmax(400px, 40%) 1fr; }
+  .scene { grid-column: 2; grid-row: 1; }
+  .copies { grid-column: 1; grid-row: 1; }
+  .stage::before { left: 70%; top: 52%; }
+  .nav { padding-left: 48px; padding-right: 32px; }
+  .copy {
+    align-items: flex-start; text-align: left;
+    padding: calc(var(--nav-h) + 24px) 24px 120px 64px;
+  }
+  .copy h2 { font-size: clamp(3rem, 4.6vw, 4.75rem); max-width: 11ch; }
+  .copy p { max-width: 30ch; }
+  .copy .get { max-width: 34ch; }
+  .copy .eyebrow { display: flex; align-items: center; gap: 12px; }
+  .copy .eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--brand-red); }
+  .moves { flex-direction: column; width: 320px; }
+  .move { text-align: left; }
+  /* Progress as numbered chapters along the bottom-left */
+  .dots { left: 52px; bottom: 32px; transform: none; flex-direction: row; gap: 8px; counter-reset: chapter; }
+  .dots button { width: auto; height: 44px; padding: 0 8px; border-radius: 8px; }
+  .dots button::before {
+    counter-increment: chapter; content: "0" counter(chapter);
+    font-size: 1.5rem; font-weight: 500; letter-spacing: 0.02em; color: var(--dot); transition: color 0.4s;
+  }
+  .dots button span { display: none; }
+  .dots button:hover::before { color: var(--text); }
+  .dots button.is-active::before { color: var(--brand-red); font-weight: 700; }
 }
 
 /* Landscape phones: scene left, words right */

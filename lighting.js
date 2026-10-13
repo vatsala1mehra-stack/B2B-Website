@@ -3,7 +3,7 @@
 // eases from 0 to 1 over ~1.4s (and back if the line retracts). The whole room's
 // colour, exposure and warmth follow the zones, reaching full warm light at the end.
 import * as THREE from "three";
-import { scene, renderer, lights, look, parts, onFrame, requestRender, LAYOUT, material, export_bg as sceneBg } from "./office.js";
+import { scene, renderer, lights, look, parts, onFrame, requestRender, LAYOUT, LITE, material, atmosphere, export_bg as sceneBg } from "./office.js";
 import { people } from "./people.js";
 import { line } from "./line.js";
 import { ease } from "./anim.js";
@@ -191,11 +191,44 @@ if (renderer && line) {
 }
 
 /* ---------- Whole-room warmth ---------- */
-const COOL_SKY = new THREE.Color(0xe3e7ee), WARM_SKY = new THREE.Color(0xfff3e4);
-const COOL_GROUND = new THREE.Color(0xa9a6a1), WARM_GROUND = new THREE.Color(0xc9b8a4);
-const COOL_SUN = new THREE.Color(0xeef0f4), WARM_SUN = new THREE.Color(0xfff0dc);
-const BG_DIM = new THREE.Color("#d3d4d7"), BG_WARM = new THREE.Color("#f4efe9");
-const SKY_DAWN = new THREE.Color(0x8f98a8), SKY_DAY = new THREE.Color(0xfff1de);
+// Pre-dawn → full warm daylight
+const COOL_SKY = new THREE.Color(0x3b4a6b), WARM_SKY = new THREE.Color(0xfff3e4);
+const COOL_GROUND = new THREE.Color(0x1c1f26), WARM_GROUND = new THREE.Color(0xc9b8a4);
+const COOL_SUN = new THREE.Color(0x9fb3d9), WARM_SUN = new THREE.Color(0xfff0dc);   // moonlight → sun
+const BG_DIM = new THREE.Color("#16181d"), BG_WARM = new THREE.Color("#f4efe9");
+const SKY_DAWN = new THREE.Color(0x26324d), SKY_DAY = new THREE.Color(0xfff1de);
+
+/* ---------- Practical lights: the line brings light with it ---------- */
+const practical = {};
+let tipHeat = 0;
+function point(color, distance, x, y, z) {
+  const l = new THREE.PointLight(color, 0, distance, 2);
+  l.position.set(x, y, z);
+  scene.add(l);
+  return l;
+}
+if (renderer && line) {
+  practical.tip = point(0xff2a1a, 2.6, 0, 0.6, 0);               // travels with the tip of the red line
+  practical.lamp = point(0xffc98a, 4.0, -4.0, 1.25, 1.5);          // the front-desk lamp
+  if (!LITE) {
+    practical.phones = point(0xfff0dd, 3.5, 2.0, 1.35, 1.6);       // phone glow on faces
+    practical.desks = point(0xffe2bd, 5.0, 1.0, 2.1, -2.0);        // desk pod
+    practical.server = point(0xdfe8ff, 2.5, -3.9, 1.0, 3.3);       // server lights
+  }
+  line.onChange((p) => {
+    if (p > 0) line.path.getPointAt(Math.min(p, 1), practical.tip.position);
+    practical.tip.position.y += 0.6;
+    tipHeat = p > 0 && p < 1 ? 1 : tipHeat;
+    applyRoom();
+  });
+  // The tip's glow fades out once the line stops
+  onFrame((dt) => {
+    if (tipHeat <= 0) return false;
+    tipHeat = Math.max(0, tipHeat - dt / 1.2);
+    applyRoom();
+    return true;
+  });
+}
 const AIRTEL_RED = new THREE.Color("#e40000");
 
 // The canvas background goes through ACES tone mapping in the output pass.
@@ -225,23 +258,38 @@ export let warmth = 0;
 function applyRoom() {
   warmth = zones.reduce((s, z) => s + eff(z) * z.weight, 0) / (totalWeight || 1);
   const g = warmth;
-  look.saturation.value = 0.3 + 0.7 * g;
-  if (renderer) renderer.toneMappingExposure = 0.52 + 0.48 * g;
+  // The office lights up from inside (g); the world outside stays night until the very end (day)
+  const day = THREE.MathUtils.smoothstep(g, 0.6, 1.0);
+  look.saturation.value = 0.5 + 0.5 * g;
+  if (renderer) renderer.toneMappingExposure = 0.4 + 0.2 * g + 0.4 * day;
+  atmosphere.fog = (1 - day) ** 1.5;
   if (lights.hemi) {
-    lights.hemi.color.copy(COOL_SKY).lerp(WARM_SKY, g);
-    lights.hemi.groundColor.copy(COOL_GROUND).lerp(WARM_GROUND, g);
-    lights.hemi.intensity = 0.75 + 0.3 * g;
-    lights.sun.color.copy(COOL_SUN).lerp(WARM_SUN, g);
-    lights.sun.intensity = 1.6 + 0.5 * g;
+    lights.hemi.color.copy(COOL_SKY).lerp(WARM_SKY, day);
+    lights.hemi.groundColor.copy(COOL_GROUND).lerp(WARM_GROUND, day);
+    lights.hemi.intensity = 0.32 + 0.18 * g + 0.55 * day;
+    lights.sun.color.copy(COOL_SUN).lerp(WARM_SUN, day);
+    lights.sun.intensity = 0.35 + 1.75 * day;
   }
-  const bg = BG_DIM.clone().lerp(BG_WARM, g);
+  // Practical lights matter most in the dark and fade back as daylight takes over
+  const dark = 1 - 0.7 * day;
+  const zl = (mark) => zones.filter((z) => z.mark === mark).reduce((m, z) => Math.max(m, eff(z)), 0);
+  const avg = (marks) => marks.reduce((t, m) => t + zl(m), 0) / marks.length;
+  if (practical.tip) practical.tip.intensity = 2.2 * tipHeat * dark;   // glows while the line travels
+  if (practical.lamp) practical.lamp.intensity = 4 * zl("frontDesk") * dark;
+  if (practical.phones) practical.phones.intensity = 1.6 * avg(["Kabir", "Arjun", "Riya", "Meera"]) * dark;
+  if (practical.desks) practical.desks.intensity = 3.5 * avg(["deskA", "deskB", "deskC", "deskD"]) * dark;
+  if (practical.server) practical.server.intensity = 1.5 * zl("server") * dark;
+  const bg = BG_DIM.clone().lerp(BG_WARM, day);
   document.documentElement.style.setProperty("--bg", `#${bg.getHexString()}`);
+  // Light words on the dark office, dark words once it's light
+  const lum = 0.2126 * bg.r + 0.7152 * bg.g + 0.0722 * bg.b;
+  document.documentElement.classList.toggle("is-dark", lum < 0.22);
   if (renderer) {
     untoneMapped(bg, renderer.toneMappingExposure, sceneBg);
     // Keep the line exactly Airtel red after tone mapping, whatever the exposure
     if (line) untoneMapped(AIRTEL_RED, renderer.toneMappingExposure, line.color);
   }
-  parts.sky?.material.color.copy(SKY_DAWN).lerp(SKY_DAY, g);
+  parts.sky?.material.color.copy(SKY_DAWN).lerp(SKY_DAY, day);
 }
 
 /* ---------- Link to the line ---------- */

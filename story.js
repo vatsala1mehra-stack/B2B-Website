@@ -21,6 +21,14 @@ const LAST = beatEls.length - 1;   // the ending step
 
 const box = (x1, y1, z1, x2, y2, z2) => new THREE.Box3(new THREE.Vector3(x1, y1, z1), new THREE.Vector3(x2, y2, z2));
 const RISE = new THREE.Vector3(1, 1.55, 1).normalize();
+// Camera directions: lower, varied angles for close-ups, higher for wide shots
+const D = (x, y, z) => new THREE.Vector3(x, y, z).normalize();
+// Close-ups look in from the open right side, so the space left of the subject (where the
+// words are on desktop) is the dark night beyond the floor's edge, not lit walls.
+const ANG = {
+  low: D(1, 0.42, 0.32), front: D(1, 0.5, 0.22), side: D(1, 0.55, 0.2), threeQ: D(1, 0.5, 0.38),
+  wide: D(1, 0.75, 1), high: D(1, 0.62, 0.42),
+};
 const portrait = () => { const r = sceneRect(); return r.w / r.h < 1; };
 const frame = (wide, tall, dir) => () => viewForBox(...(portrait() ? tall : wide), dir);
 const world = (path) => (path === "expand" ? officeBox.clone().union(annexBox) : officeBox.clone());
@@ -29,20 +37,20 @@ const world = (path) => (path === "expand" ? officeBox.clone().union(annexBox) :
 // line / annexLine: how far each red line has travelled; base: how lit the office already is;
 // grey: the three other-provider lines (phones, internet, customer lines).
 const T = {
-  team:     frame([box(0.6, 0, 0.6, 3.5, 1.8, 2.8), 1.3],    [box(0.8, 0.2, 0.8, 3.3, 1.8, 2.6), 1.12]),
-  entry:    frame([box(0.6, 0, 0.4, 5.3, 1.8, 3.3), 1.12],   [box(0.6, 0, 0.5, 4.6, 1.8, 3.2), 1.04]),
-  desks:    frame([box(-1.1, 0, -4.0, 3.9, 2.2, 0.4), 1.08], [box(-0.8, 0, -4.0, 3.7, 2.1, -0.3), 1.0]),
-  front:    frame([box(-4.4, 0, -1.3, 1.3, 1.2, 2.3), 1.08], [box(-4.4, 0, -1.0, 0.9, 1.3, 2.1), 1.1]),
-  office:   () => viewForBox(officeBox, portrait() ? 0.98 : 1.05),
+  team:     frame([box(0.6, 0, 0.6, 3.5, 1.8, 2.8), 1.25],   [box(0.8, 0.2, 0.8, 3.3, 1.8, 2.6), 1.1], ANG.low),
+  entry:    frame([box(0.6, 0, 0.4, 5.3, 1.8, 3.3), 1.1],    [box(0.6, 0, 0.5, 4.6, 1.8, 3.2), 1.04], ANG.threeQ),
+  desks:    frame([box(-1.1, 0, -4.0, 3.9, 2.2, 0.4), 1.05], [box(-0.8, 0, -4.0, 3.7, 2.1, -0.3), 1.0], ANG.side),
+  front:    frame([box(-4.4, 0, -1.3, 1.3, 1.2, 2.3), 1.05], [box(-4.4, 0, -1.0, 0.9, 1.3, 2.1), 1.08], ANG.front),
+  office:   () => viewForBox(officeBox, portrait() ? 1.0 : 1.04, ANG.wide),
   // Expand
-  arrivals: frame([box(-1.2, 0, -4.2, 5.4, 2.4, 3.8), 1.04],  [box(0.2, 0, -1.0, 5.0, 2.0, 3.8), 1.04]),
-  joiners:  frame([box(2.6, 0, 1.6, 5.0, 1.9, 4.0), 1.3],     [box(2.8, 0.2, 2.0, 4.8, 1.9, 3.9), 1.15]),
-  grow:     frame([box(-1.1, 0, -4.0, 3.9, 2.2, 2.4), 1.06],  [box(-0.8, 0, -3.0, 3.4, 2.0, 2.4), 1.02]),
-  site:     frame([box(1.5, 0, -2.6, 10.9, 2.4, 3.4), 1.04],  [box(4.2, 0, -1.2, 10.9, 2.2, 3.0), 1.0]),
-  wide:     () => viewForBox(world("expand"), portrait() ? 0.98 : 1.04),
+  arrivals: frame([box(-1.2, 0, -4.2, 5.4, 2.4, 3.8), 1.02],  [box(0.2, 0, -1.0, 5.0, 2.0, 3.8), 1.04], ANG.high),
+  joiners:  frame([box(2.6, 0, 1.6, 5.0, 1.9, 4.0), 1.25],    [box(2.8, 0.2, 2.0, 4.8, 1.9, 3.9), 1.12], ANG.low),
+  grow:     frame([box(-1.1, 0, -4.0, 3.9, 2.2, 2.4), 1.04],  [box(-0.8, 0, -3.0, 3.4, 2.0, 2.4), 1.02], ANG.side),
+  site:     frame([box(1.5, 0, -2.6, 10.9, 2.4, 3.4), 1.02],  [box(4.2, 0, -1.2, 10.9, 2.2, 3.0), 1.0], ANG.high),
+  wide:     () => viewForBox(world("expand"), portrait() ? 1.0 : 1.04, ANG.wide),
   // Switch
-  tangled:  () => viewForBox(officeBox.clone().union(box(5, -0.3, -1.5, 6.6, 0, 3.9)), portrait() ? 0.98 : 1.04),
-  numbers:  frame([box(-1.0, 0, -3.4, 5.6, 1.9, 3.3), 1.05],  [box(-0.6, 0, -3.2, 4.4, 1.9, 3.0), 1.0]),
+  tangled:  () => viewForBox(officeBox.clone().union(box(5, -0.3, -1.5, 6.6, 0, 3.9)), portrait() ? 1.0 : 1.04, ANG.wide),
+  numbers:  frame([box(-1.0, 0, -3.4, 5.6, 1.9, 3.3), 1.04],  [box(-0.6, 0, -3.2, 4.4, 1.9, 3.0), 1.0], ANG.threeQ),
 };
 
 const STEPS = {
@@ -70,7 +78,7 @@ const STEPS = {
 };
 
 function stateFor(path, step) {
-  if (step === 0) return { frame: () => viewForBox(officeBox, portrait() ? 0.98 : 1.04) };
+  if (step === 0) return { frame: () => viewForBox(officeBox, portrait() ? 1.0 : 1.02, ANG.wide) };
   if (step === LAST) {
     const s = STEPS[path][4];
     return { ...s, frame: () => viewForBox(world(path), portrait() ? 1.04 : 1.16, RISE) };

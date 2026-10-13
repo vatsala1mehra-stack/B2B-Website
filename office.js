@@ -341,7 +341,11 @@ try {
 }
 
 export const scene = new THREE.Scene();
-export const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+// A real perspective camera (a gentle telephoto) so shots have depth, like film.
+export const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 400);
+export const FOV = 30;
+// Depth haze: thick in the dark at the start, gone in daylight (lighting.js sets amount)
+export const atmosphere = { fog: 1 };
 export const lights = {};
 
 const frameCallbacks = new Set();
@@ -362,21 +366,32 @@ export const parallax = { x: 0, y: 0, tx: 0, ty: 0 };
 const _dir = new THREE.Vector3();
 const _up = new THREE.Vector3(0, 1, 0);
 
+let camDistance = 20;
 export function applyView() {
   const r = sceneRect();
   if (!r.W || !r.H) return;
   // Turn the view direction a little around the vertical axis and tilt it
-  _dir.copy(view.dir).applyAxisAngle(_up, parallax.x * 0.14);
-  _dir.y += parallax.y * 0.12;
+  _dir.copy(view.dir).applyAxisAngle(_up, parallax.x * 0.1);
+  _dir.y += parallax.y * 0.08;
   _dir.normalize();
-  camera.position.copy(view.target).addScaledVector(_dir, 40);
+  // Distance so that `size` (half-height at the target) fills the scene box
+  const half = THREE.MathUtils.degToRad(FOV / 2);
+  camDistance = (view.size * (r.H / r.h)) / Math.tan(half);
+  camera.position.copy(view.target).addScaledVector(_dir, camDistance);
   camera.lookAt(view.target);
-  // The view's target sits at the centre of the scene box, which may be off-centre
-  const wpp = (view.size * 2) / r.h;
+  camera.aspect = r.W / r.H;
+  // Put the target at the centre of the scene box (it may be off-centre)
   const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-  Object.assign(camera, { left: -cx * wpp, right: (r.W - cx) * wpp, top: cy * wpp, bottom: -(r.H - cy) * wpp });
+  camera.setViewOffset(r.W, r.H, r.W / 2 - cx, r.H / 2 - cy, r.W, r.H);
   camera.updateProjectionMatrix();
   requestRender();
+}
+
+// Depth haze follows the light (thick in the dark, gone in daylight); updated every rendered frame
+function updateFog() {
+  if (!scene.fog) return;
+  scene.fog.near = camDistance * 0.92;
+  scene.fog.far = camDistance * (1.5 + 40 * (1 - atmosphere.fog) ** 2);
 }
 
 // Smallest view (for the current canvas aspect) that fits a box, with padding.
@@ -421,7 +436,9 @@ if (renderer) {
   pmrem.dispose();
   // The page colour is composited behind the scene in post (see BackgroundPass),
   // so the background never blooms.
-  export_bg.copy(new THREE.Color(0xd3d4d7));
+  export_bg.copy(new THREE.Color(0x16181d));
+  scene.fog = new THREE.Fog(export_bg, 10, 40);
+  scene.fog.color = export_bg;   // same Color object: the haze always matches the page
 
   buildOffice();
   scene.add(office);
@@ -495,6 +512,7 @@ if (renderer) {
     if (busy) dirty = true;
     if (dirty) {
       dirty = false;
+      updateFog();
       composer.render();
     }
   }
