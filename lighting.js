@@ -8,7 +8,7 @@ import { people } from "./people.js";
 import { line } from "./line.js";
 import { ease } from "./anim.js";
 
-const DURATION = 1.4;
+const DURATION = 0.9;
 const WARM = new THREE.Color(0xffe7c9);
 const OFF = new THREE.Color(0x2b2c30);
 

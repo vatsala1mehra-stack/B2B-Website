@@ -150,45 +150,44 @@ export async function goTo(step, { force = false } = {}) {
   const sequential = step === prev + 1 && (path === prevPath || prev === 0) && !(prev === 0 && path !== "setup");
   if (reduceMotion.matches || prev === -1 || (!sequential && path !== prevPath)) {
     // Fade to the new state (path switch, first load, reduced motion)
-    if (prev !== -1) { container.classList.add("is-fading"); if (!(await wait(0.35, signal))) return; }
+    if (prev !== -1) { container.classList.add("is-fading"); if (!(await wait(0.25, signal))) return; }
     await applyInstant(path, step, s);
     container.classList.remove("is-fading");
     if (!signal.aborted) showCopy(step);
     return;
   }
 
-  const opts = { signal };
+  // Words first: the headline appears as you arrive, while the scene moves
+  showCopy(step);
   if (sequential) {
-    // One thing at a time
-    if (!(await glide(s.frame(), step === LAST ? 1.5 : 1.2, signal))) return;
+    // Brisk: camera, line and scene move together; postures follow a beat later
     setBaseline(s.base ?? 0);
-    if (!(await setAnnex(s.annex ?? 0, opts))) return;
-    if (!(await setHiresPhones(s.hires ?? 0, opts))) return;
-    const lineDone = await Promise.all([
-      line.growTo(s.line?.() ?? 0, { duration: 1.4, signal }),
-      setGrey(s.grey ?? [0, 0, 0], opts),                 // other providers fade as Airtel arrives
+    const results = await Promise.all([
+      glide(s.frame(), step === LAST ? 1.2 : 0.9, signal),
+      wait(0.2, signal).then((ok) => ok && line.growTo(s.line?.() ?? 0, { duration: 1.0, signal })),
+      setAnnex(s.annex ?? 0, { duration: 0.8, signal })
+        .then((ok) => ok && annexLine.growTo(s.annexLine ?? 0, { duration: (s.annexLine ?? 0) > 0 ? 0.9 : 0, signal })),
+      setExtraDesks(s.extra ?? 0, { duration: 0.8, signal }),
+      setGrey(s.grey ?? [0, 0, 0], { duration: 0.9, signal }),
+      setHiresPhones(s.hires ?? 0, { duration: 0.6, signal }),
+      wait(0.35, signal).then((ok) => ok && posePeople(path, step, { duration: 0.8, signal })),
     ]);
-    if (lineDone.includes(false) || lineDone[1].includes?.(false)) return;
-    if (!(await annexLine.growTo(s.annexLine ?? 0, { duration: (s.annexLine ?? 0) > 0 ? 1.4 : 0, signal }))) return;
-    if (!(await setExtraDesks(s.extra ?? 0, opts))) return;
-    if (!(await wait(0.1, signal))) return;
-    if (!(await posePeople(path, step, { duration: 1.2, signal }))) return;
+    if (results.flat().includes(false)) return;
   } else {
     // A jump within the same path: everything settles together, once
     setBaseline(s.base ?? 0);
     const results = await Promise.all([
-      glide(s.frame(), 1.4, signal),
-      line.growTo(s.line?.() ?? 0, { duration: 1.4, signal }),
-      annexLine.growTo(s.annexLine ?? 0, { duration: 1.4, signal }),
-      setAnnex(s.annex ?? 0, opts),
-      setExtraDesks(s.extra ?? 0, opts),
-      setGrey(s.grey ?? [0, 0, 0], opts),
-      setHiresPhones(s.hires ?? 0, opts),
-      posePeople(path, step, { duration: 1.2, signal }),
+      glide(s.frame(), 1.0, signal),
+      line.growTo(s.line?.() ?? 0, { duration: 1.0, signal }),
+      annexLine.growTo(s.annexLine ?? 0, { duration: 1.0, signal }),
+      setAnnex(s.annex ?? 0, { duration: 0.8, signal }),
+      setExtraDesks(s.extra ?? 0, { duration: 0.8, signal }),
+      setGrey(s.grey ?? [0, 0, 0], { duration: 0.8, signal }),
+      setHiresPhones(s.hires ?? 0, { duration: 0.6, signal }),
+      posePeople(path, step, { duration: 0.8, signal }),
     ]);
     if (results.flat().includes(false)) return;
   }
-  if (!signal.aborted) showCopy(step);
 }
 
 /* ---------- Scroll, dots, keys and path changes pick the step ---------- */

@@ -41,7 +41,7 @@ All story copy lives in `config.js` (`paths`), so the business team can edit it.
 
 ## Motion rules
 
-- One thing moves at a time. Changes take 1.2–1.6s with smooth easing (no bounce).
+- **Brisk pace (owner request):** the words appear as soon as a beat starts. Camera, line and lighting move together and postures follow a moment later; each beat settles in under about 2 seconds. Changes take 0.6–1.0s with smooth easing (no bounce). Fast scrolling may move several beats at once.
 - The camera glides; it never cuts. It starts close on the team and only pulls back fully at the end.
 - Nothing loops except a very faint pulse along the red line.
 - Respect `prefers-reduced-motion`: show each beat's end state with a fade.

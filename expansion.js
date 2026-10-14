@@ -9,7 +9,7 @@ import { laptopUI, phoneUI, screenMaterial } from "./lighting.js";
 import { people } from "./people.js";
 import { tween } from "./anim.js";
 
-const DURATION = 1.4;
+const DURATION = 0.9;
 
 // Tween a 0..1 value with an apply function; resolves false if aborted.
 function animate(state, to, apply, { duration = DURATION, signal, instant = false } = {}) {
