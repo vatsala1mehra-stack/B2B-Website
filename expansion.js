@@ -1,9 +1,9 @@
-// Scene pieces for the "Expand" and "Switch" stories:
+// Scene pieces for the "Grow" and "Switch" stories:
 // - two extra desks that rise out of the floor (expand: more desks)
 // - an annex beside the office with its own branch of the red line (expand: second site)
 // - grey lines from other providers that fade as Airtel takes over (switch)
 import * as THREE from "three";
-import { scene, office, renderer, M, material, block, group, desk, plant, blob, parts, onFrame, requestRender } from "./office.js";
+import { scene, office, renderer, M, material, block, group, desk, plant, blob, bake, parts, onFrame, requestRender } from "./office.js";
 import { line, createLine, buildPath, F, G } from "./line.js";
 import { laptopUI, phoneUI, screenMaterial } from "./lighting.js";
 import { people } from "./people.js";
@@ -44,9 +44,10 @@ function buildAnnex() {
   const { x, z, w, d, h } = ANNEX;
   const g = group(scene, x, 0, z);
   annex.group = g;
-  block(g, M.clay, w + 0.4, 0.32, d + 0.4, 0, -0.32, 0, 0.1);              // slab
-  block(g, M.clay, w + 0.4, h, 0.2, 0, 0, -d / 2 - 0.1, 0);                 // back wall
-  block(g, M.clay, 0.2, h, d + 0.4, -w / 2 - 0.1, 0, 0, 0);                 // side wall
+  block(g, M.concrete, w + 0.4, 0.32, d + 0.4, 0, -0.32, 0, 0.05);         // slab
+  block(g, M.plaster, w + 0.4, h, 0.2, 0, 0, -d / 2 - 0.1, 0);              // back wall
+  block(g, M.plaster, 0.2, h, d + 0.4, -w / 2 - 0.1, 0, 0, 0);              // side wall
+  block(g, M.trim, w + 0.2, 0.07, 0.012, 0.1, 0, -d / 2 + 0.006, 0.004);
   blob(g, 0, 0, w + 1.2, d + 1.2);
   for (const dk of ANNEX_DESKS) {
     desk(dk, g, { x, z });
@@ -58,7 +59,8 @@ function buildAnnex() {
   // small router on the back wall
   const r = group(g, 0.2, 1.4, -d / 2 + 0.05);
   block(r, M.wood, 0.5, 0.03, 0.2, 0, 0, 0.08, 0.01);
-  block(r, M.clay, 0.3, 0.06, 0.16, 0, 0.03, 0.08, 0.02);
+  block(r, M.ceramic, 0.3, 0.06, 0.16, 0, 0.03, 0.08, 0.02);
+  bake(g);
   g.scale.set(1, 0.001, 1);
   g.visible = false;
   annexBox.setFromObject(g);
@@ -71,6 +73,7 @@ function buildExtraDesks() {
     const g = desk(dk);
     const mat = screenMaterial(laptopUI);
     parts[dk.id].screen.material = mat;
+    bake(g);
     extra.groups.push(g);
     extra.screens.push(mat);
     g.scale.set(1, 0.001, 1);

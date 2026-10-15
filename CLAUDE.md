@@ -4,14 +4,14 @@ This is the design brief every future change must follow. If a change conflicts 
 
 ## Concept
 
-- **"Your office. Taken care of."** A clay office comes to life as a single red line (Airtel) runs through it, connecting the team, the internet, customers and security. One continuous line = one partner.
+- **"Your office. Taken care of."** A small office comes to life as a single red line (Airtel) runs through it, connecting the team, the internet, customers and security. One continuous line = one partner.
 - **Experience the service, don't hear a pitch.** A visitor sees exactly what changes in their office, what they would buy, and why to trust Airtel, before talking to anyone.
 - **Light tells the story:** it starts before dawn: a dark office in a dark world. The red line is the light: a red glow travels with it, and wherever it arrives that area switches on its own warm light. When the loop closes, daylight breaks.
 - **Cinematic, not diagrammatic:** a perspective camera with a planned shot per beat (eye-level close-ups, push-ins, a final rise), like film. The focal point moves to whatever is changing.
 
 ## Story: choose a need, then 5 beats, then the plan
 
-The visitor starts with one question, **"What does your office need?"**, and three choices. Each choice is its own five-beat story in the same clay world; the visitor can switch path at any time.
+The visitor starts with one question, **"What does your office need?"**, and three choices. Each choice is its own five-beat story in the same office; the visitor can switch path at any time.
 
 1. **Set up a new office**: an empty, dim office comes to life (phones → internet → customers → security).
 2. **Grow my office**: a lit office for four grows: new joiners, new desks, a leased line, a second site joining the same network.
@@ -36,8 +36,9 @@ All story copy lives in `config.js` (`paths`), so the business team can edit it.
 
 ## Visual rules
 
-- **Materials:** one matte white clay, one warm wood, red (`#e40000`) ONLY for the line and key accents. No other colours except subtle skin and clothing tones.
-- **People:** simple figurine style. They express the story through posture (standing unsure → seated working → relaxed), never speech bubbles.
+- **Stylised realism (owner decision):** a believable modern office, simplified and calm, like an architectural model brought to life. Real materials with real-world scale, simplified forms, no clutter.
+- **Materials palette:** warm plaster walls, light polished concrete floor, oak, oatmeal and charcoal fabric, black steel, glass, white ceramic, muted plant greens indoors and warm autumn tones on the trees outside. Red (`#e40000`) ONLY for the line and key accents; nothing else in the scene may read as red. Other colours only as subtle skin, hair, clothing, book spines and art in the room's own tones.
+- **People:** stylised, believable proportions (shaped torso, neck, tapered limbs, hands, shoes, hair), faceless apart from a nose. They express the story through posture (standing unsure → seated working → relaxed), never speech bubbles.
 - No icons, emoji, badges or labels in the 3D scene.
 - Soft shadows. Night: cool moonlight, depth haze, warm practical lights (phones, desks, lamp, server). Day: soft warm daylight, no haze.
 
@@ -47,11 +48,13 @@ All story copy lives in `config.js` (`paths`), so the business team can edit it.
 - The camera glides; it never cuts. It starts close on the team and only pulls back fully at the end.
 - Nothing loops except a very faint pulse along the red line.
 - Respect `prefers-reduced-motion`: show each beat's end state with a fade.
-- **Approved exceptions (owner request):** a few leaves drift down from clay trees outside the office (warm wood tones only, sparse, slow), and the isometric view turns gently towards the cursor (fine pointers only). Both are ambient, never compete with a beat's change, and switch off for reduced motion.
+- **Approved exceptions (owner request):** a few leaves drift down from the autumn trees outside the office (warm wood tones only, sparse, slow), and the isometric view turns gently towards the cursor (fine pointers only). Both are ambient, never compete with a beat's change, and switch off for reduced motion.
 
 ## Rendering
 
-- Clay-render look: soft image-based studio light, soft shadows plus contact shadows under every object.
+- Soft image-based studio light, soft shadows, contact shadows under every object, and ambient occlusion where things meet (desktop).
+- All textures are generated in code (`materials.js`) and keep a real-world scale (box UVs in metres). Static furniture is merged by material (`bake()` in `office.js`) so detail does not cost draw calls; anything that lights up or moves stays separate.
+- Anti-aliasing comes from the composer's multisampled target. Phones (LITE) drop the costly extras: no ambient occlusion, no fabric sheen, smaller textures, no MSAA on dense screens.
 - Perspective camera (about 30° field of view). Close-ups look in from the open side of the room so the space beside the subject, where the words sit, is dark night rather than lit walls.
 - Depth haze (fog) only in the dark; it fades to nothing by daylight. Fog colour always equals the page colour.
 - Bloom only on true light sources (screens, lamp, LEDs); the background never blooms.
@@ -71,7 +74,8 @@ All story copy lives in `config.js` (`paths`), so the business team can edit it.
 - Design for a 390px-wide phone first, then scale up.
 - Text never overlaps the important part of the scene: on phones the scene sits in the top 60% and text in the bottom 40%.
 - Touch: swipe or scroll to move between beats; tap targets at least 44px.
-- **Performance budget:** 60fps on a mid-range Android phone, page interactive in under 3 seconds on 4G, no 3D model files (build everything in code).
+- **Performance budget:** 60fps on a mid-range Android phone, page interactive in under 3 seconds on 4G, no 3D model files (build everything in code). Keep the phone build around 160 draw calls and 100k triangles.
+- Each piece of furniture is its own builder function (`desk()`, `chair()`, `plant()`…), so an artist's model can replace one later without touching the story.
 
 ## Project constraints (from the original setup)
 

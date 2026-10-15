@@ -1,7 +1,8 @@
-// Four figurines. They tell the story through posture only:
+// The team. They tell the story through posture only:
 // standing unsure → looking at glowing phones → seated working → relaxed.
 import * as THREE from "three";
-import { office, material, capsule, sphere, mesh, group, block, plane, blob, blobMaterial, cached, CURVE, SKIN, CLOTH, M, parts, SEAT_H, requestRender, renderer } from "./office.js";
+import { office, material, capsule, sphere, cylinder, mesh, group, block, plane, blob, blobMaterial, cached, keep, bake, CURVE, SKIN, CLOTH, M, parts, SEAT_H, requestRender, renderer } from "./office.js";
+import { fabric } from "./materials.js";
 import { tween } from "./anim.js";
 
 const HIP_STAND = 0.9;
@@ -32,14 +33,29 @@ const P = {
 
 export const people = {};
 
-function figure(name, { skin, top, bottom, hair }) {
+// Stylised but believable proportions: a shaped torso, neck, hands and shoes.
+// Joint pivots stay where the poses expect them.
+// A limb that tapers from r1 at the joint (y = 0) to r2 at length len, with rounded ends.
+function limbGeo(r1, r2, len) {
+  return cached(`limb${r1},${r2},${len}`, () => {
+    const pts = [];
+    for (let i = 0; i <= 6; i++) { const a = -Math.PI / 2 + (i / 6) * (Math.PI / 2); pts.push(new THREE.Vector2(r2 * Math.cos(a), -len + r2 * Math.sin(a))); }
+    for (let i = 0; i <= 6; i++) { const a = (i / 6) * (Math.PI / 2); pts.push(new THREE.Vector2(r1 * Math.cos(a) + 1e-4, r1 * Math.sin(a))); }
+    return new THREE.LatheGeometry(pts, CURVE);
+  });
+}
+
+const TORSO = [[0, -0.08], [0.152, -0.07], [0.166, 0.02], [0.157, 0.16], [0.17, 0.3], [0.2, 0.41], [0.222, 0.47], [0.2, 0.53], [0.12, 0.58], [0.05, 0.6], [0, 0.6]];
+
+function figure(name, { skin, top, bottom, hair, hairColor = 0x2e2520, shoes, sleeves = "long" }) {
   // Per-person materials so each figure can fade on its own
   const mats = {
-    skin: material(skin, 0.8, { transparent: true }),
-    top: material(top.color.getHex(), 0.92, { transparent: true }),
-    bottom: material(bottom.color.getHex(), 0.92, { transparent: true }),
-    hair: material(M.hair.color.getHex(), 0.85, { transparent: true }),
-    phone: material(M.dark.color.getHex(), 0.45, { transparent: true }),
+    skin: material(skin, 0.62, { transparent: true }),
+    top: fabric(top.color.getHex(), { transparent: true }),
+    bottom: fabric(bottom.color.getHex(), { transparent: true }),
+    hair: material(hairColor, 0.55, { transparent: true }),
+    shoes: material(shoes, 0.5, { transparent: true }),
+    phone: material(M.dark.color.getHex(), 0.4, { transparent: true }),
   };
 
   const root = group(office);
@@ -47,38 +63,47 @@ function figure(name, { skin, top, bottom, hair }) {
   const shadowMat = blobMaterial(0.9);
   blob(root, 0, 0.05, 0.75, 0.75, shadowMat);
   const hips = group(root, 0, HIP_STAND, 0);
+  sphere(hips, mats.bottom, 0.145, 0, -0.01, 0).scale.set(1.0, 0.7, 0.68);
 
   const legs = [-1, 1].map((sx) => {
     const thigh = group(hips, sx * 0.095, 0, 0);
-    capsule(thigh, mats.bottom, 0.078, 0.3, 0, -0.2, 0);
+    mesh(limbGeo(0.086, 0.068, 0.41), mats.bottom, thigh);
     const knee = group(thigh, 0, -0.41, 0);
-    capsule(knee, mats.bottom, 0.072, 0.3, 0, -0.21, 0);
+    mesh(limbGeo(0.067, 0.05, 0.4), mats.bottom, knee);
+    block(knee, mats.shoes, 0.1, 0.075, 0.24, 0, -0.49, 0.045, 0.035);
     return { thigh, knee };
   });
 
   const torso = group(hips, 0, 0, 0);
-  capsule(torso, mats.top, 0.19, 0.34, 0, 0.3, 0);
+  mesh(cached("torso", () => new THREE.LatheGeometry(TORSO.map(([r, y]) => new THREE.Vector2(r, y)), CURVE)), mats.top, torso).scale.set(1, 1, 0.7);
+  cylinder(torso, mats.skin, 0.046, 0.05, 0.12, 0, 0.55, 0.005);
 
   const head = group(torso, 0, 0.76, 0.01);
-  sphere(head, mats.skin, 0.15);
-  const cap = mesh(cached("hair", () => new THREE.SphereGeometry(0.158, CURVE, 10, 0, Math.PI * 2, 0, Math.PI * 0.45)), mats.hair, head, 0, 0.01, -0.02);
-  cap.rotation.x = -0.6;
-  if (hair === "long") capsule(head, mats.hair, 0.13, 0.16, 0, -0.1, -0.06).scale.set(1, 1, 0.7);
-  else if (hair === "bun") sphere(head, mats.hair, 0.07, 0, 0.12, -0.13);
+  sphere(head, mats.skin, 0.135).scale.set(0.9, 1.08, 0.98);
+  sphere(head, mats.skin, 0.022, 0, -0.012, 0.128).scale.set(0.8, 1, 1.1);
+  for (const sx of [-1, 1]) sphere(head, mats.skin, 0.03, sx * 0.118, -0.005, -0.005).scale.set(0.45, 1, 0.75);
+  const cap = mesh(cached("hair", () => new THREE.SphereGeometry(0.14, CURVE, 10, 0, Math.PI * 2, 0, Math.PI * 0.56)), mats.hair, head, 0, 0.014, -0.01);
+  cap.scale.set(0.94, 1.1, 1.02);
+  cap.rotation.x = -0.38;
+  if (hair === "long") capsule(head, mats.hair, 0.105, 0.16, 0, -0.12, -0.07).scale.set(1, 1, 0.55);
+  else if (hair === "bun") sphere(head, mats.hair, 0.062, 0, 0.11, -0.12);
 
   const arms = [1, -1].map((side) => {
-    const shoulder = group(torso, side * 0.245, 0.47, 0);
-    capsule(shoulder, mats.top, 0.055, 0.2, 0, -0.14, 0);
+    const shoulder = group(torso, side * 0.232, 0.465, 0);
+    mesh(limbGeo(0.06, 0.047, 0.3), mats.top, shoulder);
     const elbow = group(shoulder, 0, -0.3, 0);
-    capsule(elbow, mats.top, 0.048, 0.14, 0, -0.1, 0);
-    sphere(elbow, mats.skin, 0.048, 0, -0.24, 0);
+    mesh(limbGeo(0.046, 0.034, 0.2), sleeves === "long" ? mats.top : mats.skin, elbow);
+    sphere(elbow, mats.skin, 0.044, 0, -0.245, 0.005).scale.set(0.72, 1.08, 0.52);
     return { side, shoulder, elbow };
   });
 
   // Phone lives in the right hand; its screen is lit by lighting.js
   const phone = group(arms[0].elbow, 0, -0.27, 0.03);
-  block(phone, mats.phone, 0.085, 0.16, 0.014, 0, -0.08, 0, 0.012);
-  const phoneScreen = plane(phone, M.dark, 0.07, 0.14, 0, 0, 0.0075);
+  block(phone, mats.phone, 0.08, 0.16, 0.012, 0, -0.08, 0, 0.012);
+  const phoneScreen = keep(plane(phone, M.dark, 0.068, 0.145, 0, 0, 0.0065));
+
+  // Fewer draw calls: merge each body part's pieces by material (joints stay separate)
+  for (const j of [hips, torso, head, ...legs.flatMap((l) => [l.thigh, l.knee]), ...arms.flatMap((a) => [a.shoulder, a.elbow])]) bake(j, { deep: false });
 
   const meshes = [];
   root.traverse((o) => o.isMesh && o.material !== shadowMat && meshes.push(o));
@@ -121,13 +146,13 @@ function setOpacity(p, k) {
 
 /* ---------- Cast ---------- */
 const cast = [
-  ["Riya",  { skin: SKIN[2], top: CLOTH.sage,  bottom: CLOTH.ink,   hair: "long" }],
-  ["Arjun", { skin: SKIN[0], top: CLOTH.slate, bottom: CLOTH.umber, hair: "short" }],
-  ["Meera", { skin: SKIN[1], top: CLOTH.mauve, bottom: CLOTH.denim, hair: "bun" }],
-  ["Kabir", { skin: SKIN[3], top: CLOTH.sand,  bottom: CLOTH.stone, hair: "short" }],
-  // New joiners in the "Expand" story
-  ["Isha",  { skin: SKIN[0], top: CLOTH.stone, bottom: CLOTH.ink,   hair: "long" }],
-  ["Dev",   { skin: SKIN[2], top: CLOTH.denim, bottom: CLOTH.umber, hair: "short" }],
+  ["Riya",  { skin: SKIN[2], top: CLOTH.sage,  bottom: CLOTH.ink,   hair: "long",  hairColor: 0x3b2a20, shoes: 0xeeeae4, sleeves: "short" }],
+  ["Arjun", { skin: SKIN[0], top: CLOTH.slate, bottom: CLOTH.umber, hair: "short", hairColor: 0x1f1b19, shoes: 0x3a302a }],
+  ["Meera", { skin: SKIN[1], top: CLOTH.mauve, bottom: CLOTH.denim, hair: "bun",   hairColor: 0x221c19, shoes: 0x2c2b2d }],
+  ["Kabir", { skin: SKIN[3], top: CLOTH.sand,  bottom: CLOTH.stone, hair: "short", hairColor: 0x181514, shoes: 0xeeeae4, sleeves: "short" }],
+  // New joiners in the "Grow" story
+  ["Isha",  { skin: SKIN[0], top: CLOTH.stone, bottom: CLOTH.ink,   hair: "long",  hairColor: 0x4a3426, shoes: 0x3a302a }],
+  ["Dev",   { skin: SKIN[2], top: CLOTH.denim, bottom: CLOTH.umber, hair: "short", hairColor: 0x2a211c, shoes: 0xeeeae4, sleeves: "short" }],
 ];
 
 // Where everyone stands at the start (also used for light pools under them)

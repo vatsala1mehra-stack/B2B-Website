@@ -19,13 +19,14 @@ map in `office.html`. Runs as-is on GitHub Pages.
 | `index.html` | Redirects the site root to `office.html`. | — |
 | `styles.css` | All styling. Colours, font and spacing are CSS variables at the top. Mobile-first: scene top 60%, words bottom 40%. | Web |
 | `main.js` | Renders everything from `config.js`: nav menus, the story copy for the chosen path, the plan and Buy online URL, the "Why Airtel" proof and footer. Owns the chosen path. Runs a simple fallback story if 3D can't load. | Web |
-| `office.js` | The clay office: materials, furniture, layout, renderer (studio light, bloom, tone-matched background), camera, cursor parallax and the render loop (paused off screen / in hidden tabs). | Web |
+| `office.js` | The office: furniture builders, layout, mesh merging (`bake`), renderer (studio light, ambient occlusion, anti-aliasing, bloom, tone-matched background), camera, cursor parallax and the render loop (paused off screen / in hidden tabs). | Web |
+| `materials.js` | The material palette and the textures generated in code: oak, polished concrete, plaster, fabric weave. Also decides the lighter phone build (`LITE`). | Web |
 | `line.js` | The red line: one path through named waypoints, `growTo(t)` with smooth easing, and a faint pulse. | Web |
 | `lighting.js` | The light-up system: each area warms over ~1.4s when the line reaches it; the whole room warms with progress. | Web |
 | `people.js` | The four figurines (Riya, Arjun, Meera, Kabir) and their poses for each beat. | Web |
 | `story.js` | "What does your office need?" → five beats for the chosen path (set up / grow / switch) → ending. Scroll, dots or arrow keys pick a step; words first, then camera, line and light move together. | Web |
 | `expansion.js` | Scene pieces for the other paths: extra desks, the second-site annex and its line, the grey other-provider lines. | Web |
-| `leaves.js` | Clay trees outside the office and a few drifting leaves (approved exception in `CLAUDE.md`). | Web |
+| `leaves.js` | Autumn trees outside the office and a few drifting leaves (approved exception in `CLAUDE.md`). | Web |
 | `anim.js` | Tiny tween helper and the site's one easing curve. | Web |
 | `assets/office-poster.jpg` | Static image of the finished office, shown if WebGL or Three.js is unavailable. | — |
 | `CLAUDE.md` | The design brief. | Design |
