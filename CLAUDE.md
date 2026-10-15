@@ -9,12 +9,12 @@ This is the design brief every future change must follow. If a change conflicts 
 - **Light tells the story:** it starts before dawn: a dark office in a dark world. The red line is the light: a red glow travels with it, and wherever it arrives that area switches on its own warm light. When the loop closes, daylight breaks.
 - **Cinematic, not diagrammatic:** a perspective camera with a planned shot per beat (eye-level close-ups, push-ins, a final rise), like film. The focal point moves to whatever is changing.
 
-## Story: choose a move, then 5 beats, then the plan
+## Story: choose a need, then 5 beats, then the plan
 
-The visitor starts with one question, **"What's your move?"**, and three choices. Each choice is its own five-beat story in the same clay world; the visitor can switch path at any time.
+The visitor starts with one question, **"What does your office need?"**, and three choices. Each choice is its own five-beat story in the same clay world; the visitor can switch path at any time.
 
 1. **Set up a new office**: an empty, dim office comes to life (phones → internet → customers → security).
-2. **Expand my office**: a lit office for four grows: new joiners, new desks, a leased line, a second site joining the same network.
+2. **Grow my office**: a lit office for four grows: new joiners, new desks, a leased line, a second site joining the same network.
 3. **Switch to Airtel**: a working office tangled in grey lines from several providers; the red line replaces them one by one.
 
 **End: "Your office. Taken care of."** The camera rises over the fully lit office, then the path's plan (from `config.js`) with Buy online.
@@ -23,8 +23,10 @@ All story copy lives in `config.js` (`paths`), so the business team can edit it.
 
 ## Copy rules
 
-- **Concrete, never vague:** each beat names a real problem or outcome a founder recognises ("Three providers. Three bills."), not a mood.
+- **Plain and literal, never abstract:** each headline says exactly what happens in that beat, in words a founder would use ("Phones for the whole team.", "Keep your current numbers."). No metaphors, wordplay or moods.
+- **Momentum:** beat 1 states the problem; beats 2–5 each solve one part of it, in the order the founder would buy them. Each step should read as the obvious next one.
 - Headlines of 5 words or fewer; one sentence that says *how*, in plain words.
+- Button and menu labels are verbs the visitor would say: "Set up a new office", "Grow my office", "Switch to Airtel".
 - **"You get"**: one quiet line under the sentence naming the products that make it happen (catalogue names from `config.js`). This is the only place product names appear during the story.
 - **No invented facts.** Stats, customers, quotes, certifications and time or uptime promises come only from Airtel. Until then they are visible [placeholders] in `config.js`.
 

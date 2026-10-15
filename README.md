@@ -23,7 +23,7 @@ map in `office.html`. Runs as-is on GitHub Pages.
 | `line.js` | The red line: one path through named waypoints, `growTo(t)` with smooth easing, and a faint pulse. | Web |
 | `lighting.js` | The light-up system: each area warms over ~1.4s when the line reaches it; the whole room warms with progress. | Web |
 | `people.js` | The four figurines (Riya, Arjun, Meera, Kabir) and their poses for each beat. | Web |
-| `story.js` | "What's your move?" → five beats for the chosen path (set up / expand / switch) → ending. Scroll, dots or arrow keys pick a step; camera glide → scene change → posture → words. | Web |
+| `story.js` | "What does your office need?" → five beats for the chosen path (set up / grow / switch) → ending. Scroll, dots or arrow keys pick a step; words first, then camera, line and light move together. | Web |
 | `expansion.js` | Scene pieces for the other paths: extra desks, the second-site annex and its line, the grey other-provider lines. | Web |
 | `leaves.js` | Clay trees outside the office and a few drifting leaves (approved exception in `CLAUDE.md`). | Web |
 | `anim.js` | Tiny tween helper and the site's one easing curve. | Web |
