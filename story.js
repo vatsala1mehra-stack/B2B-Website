@@ -222,3 +222,4 @@ container.addEventListener("resize-scene", () => {
 });
 
 goTo(0);
+document.documentElement.classList.add("story-ready");

@@ -280,10 +280,13 @@ function applyRoom() {
   if (practical.desks) practical.desks.intensity = 3.5 * avg(["deskA", "deskB", "deskC", "deskD"]) * dark;
   if (practical.server) practical.server.intensity = 1.5 * zl("server") * dark;
   const bg = BG_DIM.clone().lerp(BG_WARM, day);
-  document.documentElement.style.setProperty("--bg", `#${bg.getHexString()}`);
-  // Light words on the dark office, dark words once it's light
-  const lum = 0.2126 * bg.r + 0.7152 * bg.g + 0.0722 * bg.b;
-  document.documentElement.classList.toggle("is-dark", lum < 0.22);
+  // The page colour follows the scene, unless the 3D has handed over to the poster
+  if (!document.documentElement.classList.contains("no-3d")) {
+    document.documentElement.style.setProperty("--bg", `#${bg.getHexString()}`);
+    // Light words on the dark office, dark words once it's light
+    const lum = 0.2126 * bg.r + 0.7152 * bg.g + 0.0722 * bg.b;
+    document.documentElement.classList.toggle("is-dark", lum < 0.22);
+  }
   if (renderer) {
     untoneMapped(bg, renderer.toneMappingExposure, sceneBg);
     // Keep the line exactly Airtel red after tone mapping, whatever the exposure

@@ -54,7 +54,8 @@ All story copy lives in `config.js` (`paths`), so the business team can edit it.
 
 - Soft image-based studio light, soft shadows, contact shadows under every object, and ambient occlusion where things meet (desktop).
 - All textures are generated in code (`materials.js`) and keep a real-world scale (box UVs in metres). Static furniture is merged by material (`bake()` in `office.js`) so detail does not cost draw calls; anything that lights up or moves stays separate.
-- Anti-aliasing comes from the composer's multisampled target. Phones (LITE) drop the costly extras: no ambient occlusion, no fabric sheen, smaller textures, no MSAA on dense screens.
+- Anti-aliasing comes from the composer's multisampled target, on standard-density screens only (dense screens hide jagged edges, and MSAA costs the most memory there). Phones (LITE) drop the costly extras: no ambient occlusion, no fabric sheen, smaller textures.
+- If the 3D can't start or stops (no WebGL, a script error, a lost WebGL context), the page falls back to the poster image and the words-only story. Never leave an empty stage.
 - Perspective camera (about 30° field of view). Close-ups look in from the open side of the room so the space beside the subject, where the words sit, is dark night rather than lit walls.
 - Depth haze (fog) only in the dark; it fades to nothing by daylight. Fog colour always equals the page colour.
 - Bloom only on true light sources (screens, lamp, LEDs); the background never blooms.

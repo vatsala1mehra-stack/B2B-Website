@@ -483,6 +483,18 @@ function buildOffice() {
 /*  Renderer, lights, camera, loop                                     */
 /* ------------------------------------------------------------------ */
 export let renderer = null;
+
+// If the 3D stops after starting (a render error, or the browser dropping the WebGL
+// context, as phones do under memory pressure), hand over to the poster and the simple story.
+let failed = false;
+function fallBack(reason) {
+  if (failed) return;
+  failed = true;
+  console.warn("3D scene stopped; showing the poster instead.", reason);
+  document.documentElement.classList.add("no-3d", "story-failed");
+  window.dispatchEvent(new Event("story-failed"));
+}
+
 try {
   // Anti-aliasing happens in the composer's multisampled target, not the canvas
   renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference: "high-performance" });
@@ -625,8 +637,9 @@ if (renderer) {
   // 1. scene on a transparent background  2. page colour behind it (alpha kept)
   // 3. bloom only where there is something (alpha) and it is brighter than white
   // 4. tone mapping + sRGB
-  // Multisampled anti-aliasing; skipped on dense phone screens, where it costs the most and shows the least
-  const samples = !LITE ? 4 : devicePixelRatio >= 2 ? 0 : 2;
+  // Multisampled anti-aliasing on standard-density screens only: on dense (retina, phone)
+  // screens the pixels already hide jagged edges, and MSAA would cost the most GPU memory there
+  const samples = devicePixelRatio >= 1.5 ? 0 : LITE ? 2 : 4;
   composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples }));
   composer.addPass(new RenderPass(scene, camera));
   // Ambient occlusion (desktop): soft contact darkening where things meet, the
@@ -660,7 +673,7 @@ if (renderer) {
   let running = true;
   const clock = new THREE.Clock();
   function loop() {
-    if (!running) return;
+    if (!running || failed) return;
     requestAnimationFrame(loop);
     const dt = Math.min(clock.getDelta(), 0.1);
     let busy = stepTweens(dt);
@@ -677,7 +690,7 @@ if (renderer) {
     if (dirty) {
       dirty = false;
       updateFog();
-      composer.render();
+      try { composer.render(); } catch (err) { fallBack(err); }
     }
   }
 
@@ -697,6 +710,7 @@ if (renderer) {
   renderer.shadowMap.needsUpdate = true;
   requestAnimationFrame(loop);
   container.classList.add("is-ready");
+  canvas.addEventListener("webglcontextlost", () => fallBack("WebGL context lost"));
 
   // Only render while the scene is on screen and the tab is visible.
   const setRunning = (on) => {

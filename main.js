@@ -166,6 +166,9 @@ renderProof();
 
 /* ---------- Fallback story (no WebGL / Three.js unavailable) ---------- */
 function fallbackStory() {
+  // The poster sits on its own warm background, with dark words
+  document.documentElement.style.removeProperty("--bg");
+  document.documentElement.classList.remove("is-dark");
   const dots = $$(".dots button");
   const beats = $$(".beat");
   const show = (step) => {
@@ -185,3 +188,13 @@ function fallbackStory() {
 // story.js may fail before or after this module runs
 if (document.documentElement.classList.contains("story-failed")) fallbackStory();
 else window.addEventListener("story-failed", fallbackStory, { once: true });
+
+// If the 3D story throws while it starts (an unsupported browser or device), show the
+// poster and the simple story instead of an empty stage. Only errors from scripts count.
+window.addEventListener("error", (e) => {
+  const root = document.documentElement;
+  if (root.classList.contains("story-ready") || root.classList.contains("story-failed")) return;
+  if (!/\.js(\?|$)/.test(e.filename || "")) return;
+  root.classList.add("no-3d", "story-failed");
+  window.dispatchEvent(new Event("story-failed"));
+});
